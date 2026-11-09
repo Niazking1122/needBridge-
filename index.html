@@ -2,70 +2,95 @@
 <html lang="ps" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeedBridge | وړیا مرسته</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeedBridge</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f4f8f7;color:#173b39}
-header{background:#087e72;color:white;padding:18px 6%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.logo{font-size:25px;font-weight:bold}
-button{cursor:pointer;border:0;border-radius:9px;padding:11px 17px;font-size:15px}
-.lang{background:white;color:#087e72;font-weight:bold}
-.hero{padding:65px 20px;text-align:center;background:linear-gradient(135deg,#087e72,#13a58f);color:white}
-.hero h1{font-size:38px;margin:0 0 15px}
-.hero p{font-size:19px;line-height:1.8}
-.hero a{display:inline-block;background:white;color:#087e72;padding:13px 24px;border-radius:9px;text-decoration:none;font-weight:bold;margin-top:15px}
-main{max-width:1050px;margin:35px auto;padding:0 18px}
-h2{text-align:center}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:16px;margin-top:25px}
-.card{background:white;border-radius:15px;padding:25px 12px;text-align:center;box-shadow:0 3px 14px #173b3912;font-size:18px}
-.emoji{font-size:34px;display:block;margin-bottom:12px}
-.about{background:white;border-radius:15px;padding:25px;margin:35px 0;text-align:center;line-height:1.9}
-footer{background:#173b39;color:white;text-align:center;padding:25px}
+body{font-family:Arial;background:#f3f8f6;margin:0;color:#173b39}
+header{background:#087e72;color:white;padding:20px;text-align:center}
+main{max-width:600px;margin:25px auto;padding:15px}
+section{background:white;padding:22px;border-radius:14px;margin:15px 0}
+input{width:100%;box-sizing:border-box;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:8px}
+button{padding:12px 18px;background:#087e72;color:white;border:0;border-radius:8px;margin:5px;cursor:pointer}
+.card{display:inline-block;background:white;padding:20px;margin:6px;border-radius:10px}
+#message{padding:12px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header>
-<div class="logo">🌉 NeedBridge</div>
-<button class="lang" onclick="toggleLang()" id="langBtn">English</button>
+<h1>🌉 NeedBridge</h1>
+<p>وړیا مرسته د ټولو لپاره</p>
 </header>
-<section class="hero">
-<h1 id="heading">مرسته له انسانه تر انسانه</h1>
-<p id="intro">یوه وړیا نړیواله شبکه چې مرسته غوښتونکي له مرسته کوونکو سره نښلوي.</p>
-<a href="#categories" id="start">د مرستې برخې وګوره</a>
-</section>
 <main>
-<h2 id="catTitle">د مرستې برخې</h2>
-<div class="cards" id="categories">
-<div class="card"><span class="emoji">🍲</span><span data-ps="خواړه" data-en="Food">خواړه</span></div>
-<div class="card"><span class="emoji">📚</span><span data-ps="زده کړې" data-en="Education">زده کړې</span></div>
-<div class="card"><span class="emoji">🏥</span><span data-ps="روغتیا" data-en="Healthcare">روغتیا</span></div>
-<div class="card"><span class="emoji">👕</span><span data-ps="جامې" data-en="Clothing">جامې</span></div>
-<div class="card"><span class="emoji">🛂</span><span data-ps="ویزه او غوښتنلیک" data-en="Visa Guidance">ویزه او غوښتنلیک</span></div>
-<div class="card"><span class="emoji">🤝</span><span data-ps="رضاکارانه مرسته" data-en="Volunteering">رضاکارانه مرسته</span></div>
-</div>
-<section class="about">
-<h2 id="aboutTitle">زموږ موخه</h2>
-<p id="aboutText">NeedBridge د مرستې لپاره جوړ شوی. زموږ ټول خدمتونه وړیا دي او موخه مو دا ده چې خلک له یو بل سره مرسته وکړي.</p>
+<section>
+<h2>د مرستې برخې</h2>
+<div class="card">🍲 خواړه</div>
+<div class="card">📚 زده کړې</div>
+<div class="card">🏥 روغتیا</div>
+<div class="card">👕 جامې</div>
+<div class="card">🛂 ویزه</div>
+<div class="card">🤝 رضاکارانه مرسته</div>
+</section>
+
+<section>
+<h2>حساب ته ننوتل / نوی حساب</h2>
+<input id="name" placeholder="بشپړ نوم (Full name)">
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="signup()">نوی حساب جوړ کړه</button>
+<button onclick="login()">Login / ننوتل</button>
+<button onclick="logout()">Logout / وتل</button>
+<p id="message">مهرباني وکړئ خپل معلومات ولیکئ.</p>
+<p id="user"></p>
 </section>
 </main>
-<footer id="footer">NeedBridge © 2026 — وړیا مرسته د ټولو لپاره</footer>
 <script>
-let english=false;
-function toggleLang(){
-english=!english;
-document.documentElement.lang=english?'en':'ps';
-document.documentElement.dir=english?'ltr':'rtl';
-document.getElementById('langBtn').textContent=english?'پښتو':'English';
-document.getElementById('heading').textContent=english?'People helping people':'مرسته له انسانه تر انسانه';
-document.getElementById('intro').textContent=english?'A free global platform connecting people who need help with people who want to help.':'یوه وړیا نړیواله شبکه چې مرسته غوښتونکي له مرسته کوونکو سره نښلوي.';
-document.getElementById('start').textContent=english?'Explore help categories':'د مرستې برخې وګوره';
-document.getElementById('catTitle').textContent=english?'Help Categories':'د مرستې برخې';
-document.getElementById('aboutTitle').textContent=english?'Our Mission':'زموږ موخه';
-document.getElementById('aboutText').textContent=english?'NeedBridge is built to connect people. All platform services are free, helping people support one another.':'NeedBridge د مرستې لپاره جوړ شوی. زموږ ټول خدمتونه وړیا دي او موخه مو دا ده چې خلک له یو بل سره مرسته وکړي.';
-document.getElementById('footer').textContent=english?'NeedBridge © 2026 — Free help for everyone':'NeedBridge © 2026 — وړیا مرسته د ټولو لپاره';
-document.querySelectorAll('[data-ps]').forEach(el=>el.textContent=english?el.dataset.en:el.dataset.ps);
+const db = window.supabase.createClient(
+'https://urozgfqxtbjmejyyocow.supabase.co',
+'sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T'
+);
+
+async function signup(){
+const name=document.getElementById('name').value.trim();
+const email=document.getElementById('email').value.trim();
+const password=document.getElementById('password').value;
+if(!name||!email||password.length<6){
+return show('نوم، ایمیل او لږ تر لږه ۶ توري پاسورډ ولیکئ.');
 }
+const {data,error}=await db.auth.signUp({
+email,password,
+options:{data:{full_name:name}}
+});
+if(error)return show(error.message);
+show(data.session?'حساب جوړ شو!':'حساب جوړ شو. خپل ایمیل تایید کړئ.');
+}
+
+async function login(){
+const email=document.getElementById('email').value.trim();
+const password=document.getElementById('password').value;
+const {data,error}=await db.auth.signInWithPassword({email,password});
+if(error)return show(error.message);
+show('په بریالیتوب داخل شوې!');
+}
+
+async function logout(){
+const {error}=await db.auth.signOut();
+if(error)return show(error.message);
+show('له حسابه ووتلې.');
+}
+
+function show(text){
+document.getElementById('message').textContent=text;
+}
+
+async function updateUser(){
+const {data}=await db.auth.getUser();
+document.getElementById('user').textContent=
+data.user?'Logged in: '+data.user.email:'';
+}
+
+db.auth.onAuthStateChange(()=>updateUser());
+updateUser();
 </script>
 </body>
 </html>
