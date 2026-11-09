@@ -5,481 +5,453 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NeedBridge</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:Arial;background:#f1f5f9;margin:0;padding:15px;color:#172554}
-header,section{background:white;padding:18px;margin:15px auto;border-radius:12px;max-width:550px;text-align:center}
-header{background:#075985;color:white}
-input,textarea,select{box-sizing:border-box;width:95%;padding:12px;margin:8px;border:1px solid #ccc;border-radius:8px}
-button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8px;margin:5px;cursor:pointer}
-.approve{background:#15803d}
-.reject{background:#dc2626}
-.report{background:#b45309}
-.request-card{background:#f1f5f9;padding:12px;margin:10px 0;border-radius:8px;text-align:start;overflow-wrap:anywhere}
-#message,#requestMessage{color:#075985}
-#adminStatus{color:#15803d;font-weight:bold}
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;color:#172033}
+header{background:#075985;color:white;padding:20px;text-align:center}
+main{max-width:850px;margin:20px auto;padding:12px}
+section,.post{background:white;padding:18px;margin:15px 0;border-radius:12px;box-shadow:0 2px 8px #0001}
+input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:white;margin:5px;cursor:pointer;font-size:15px}
+button.danger{background:#dc2626}
+button.green{background:#15803d}
+button.gray{background:#475569}
+.post{border-right:5px solid #0284c7}
+.hidden{display:none}
+.status{font-weight:bold;color:#075985}
+#message{padding:12px;margin:10px 0;border-radius:7px}
 </style>
 </head>
 <body>
 
 <header>
 <h1>NeedBridge</h1>
-<p id="welcome">د مرستې پل — وړیا مرسته د ټولو لپاره</p>
-<button onclick="changeLang('ps')">پښتو</button>
-<button onclick="changeLang('en')">English</button>
+<p>د مرستې نړیوال وړیا پلیټفارم</p>
+<button onclick="toggleLanguage()" class="gray">English / پښتو</button>
 </header>
 
+<main>
+
+<div id="message"></div>
+
 <section>
-<h2 id="authTitle">نوی حساب جوړ کړئ</h2>
-<input id="name" placeholder="بشپړ نوم">
-<input id="email" type="email" placeholder="ایمیل">
-<input id="password" type="password" placeholder="پاسورډ">
-<button id="signupBtn" onclick="signup()">حساب جوړول</button>
-<button id="loginBtn" onclick="login()">ننوتل</button>
-<button id="logoutBtn" onclick="logout()" hidden>وتل</button>
-<p id="userStatus"></p>
-<p id="adminStatus"></p>
-<p id="message"></p>
+<h2 id="authTitle">Login / حساب ته ننوتل</h2>
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="signup()">Sign Up</button>
+<button onclick="login()">Login</button>
+<button onclick="logout()" class="danger">Logout</button>
+<p id="userStatus">لاګین نه یې</p>
 </section>
 
-<section id="requestSection" hidden>
-<h2 id="requestTitle">د مرستې غوښتنه ثبت کړئ</h2>
-<input id="title" placeholder="د غوښتنې سرلیک">
+<section>
+<h2>د مرستې غوښتنه</h2>
+<input id="postTitle" placeholder="د غوښتنې سرلیک">
 <select id="category">
-<option value="Food">خواړه</option>
-<option value="Education">زده کړې</option>
-<option value="Healthcare">روغتیا</option>
-<option value="Visa">ویزه</option>
-<option value="Clothing">جامې</option>
-<option value="Volunteering">رضاکارانه مرسته</option>
+<option value="">کټګوري انتخاب کړه</option>
+<option>Food</option>
+<option>Education</option>
+<option>Healthcare</option>
+<option>Visa</option>
+<option>Clothing</option>
+<option>Volunteering</option>
 </select>
-<textarea id="description" placeholder="خپله غوښتنه تشریح کړئ"></textarea>
-<input id="country" placeholder="هېواد">
-<input id="city" placeholder="ښار">
-<button id="submitBtn" onclick="submitRequest()">غوښتنه ثبتول</button>
-<p id="requestMessage"></p>
-</section>
-
-<section id="requestsSection">
-<h2 id="requestsTitle">د خلکو د مرستې غوښتنې</h2>
-<button onclick="loadRequests()" id="refreshBtn">بیا تازه کول</button>
-<div id="publicRequests"></div>
+<textarea id="description" placeholder="د خپلې اړتیا په اړه معلومات ولیکه"></textarea>
+<input id="country" placeholder="Country">
+<input id="city" placeholder="City">
+<button onclick="submitPost()">Submit Help Request</button>
 </section>
 
 <section>
-<h2 id="categoriesTitle">د مرستې برخې</h2>
-<div id="categories"></div>
+<h2>د مرستې کټګورۍ</h2>
+<p>🍚 Food | 📚 Education | 🏥 Healthcare</p>
+<p>🛂 Visa | 👕 Clothing | 🤝 Volunteering</p>
 </section>
 
-<section id="adminReportsSection" hidden>
-<h2 id="adminReportsTitle">Admin Reports Panel</h2>
-<button onclick="loadAdminReports()" id="reportsRefresh">Refresh Reports</button>
-<div id="reportList"></div>
+<section>
+<h2>د مرستې غوښتنې</h2>
+<button onclick="loadRequests()">Refresh Requests</button>
+<div id="posts">Loading...</div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<section id="adminPanel" class="hidden">
+<h2>Admin Panel</h2>
+<p>You are an Admin</p>
+<div id="adminPosts"></div>
+</section>
+
+<section id="reportsPanel" class="hidden">
+<h2>Admin Reports Panel</h2>
+<button onclick="loadReports()">Refresh Reports</button>
+<div id="reportList">Loading reports...</div>
+</section>
+
+</main>
+
 <script>
-const db=window.supabase.createClient(
-"https://urozgfqxtbjmejyyocow.supabase.co",
-"sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T"
+const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9";
+
+const ADMIN_ID = "0226963d-a946-498c-a977-f3eeac1c02f3";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
 );
 
-const $=id=>document.getElementById(id);
-let lang="ps";
-let currentUser=null;
-let isAdmin=false;
+let currentUser = null;
+let isAdmin = false;
+let language = "ps";
 
-const words={
-ps:{
-welcome:"د مرستې پل — وړیا مرسته د ټولو لپاره",
-auth:"نوی حساب جوړ کړئ",name:"بشپړ نوم",email:"ایمیل",
-password:"پاسورډ",signup:"حساب جوړول",login:"ننوتل",
-logout:"وتل",request:"د مرستې غوښتنه ثبت کړئ",
-title:"د غوښتنې سرلیک",description:"خپله غوښتنه تشریح کړئ",
-country:"هېواد",city:"ښار",submit:"غوښتنه ثبتول",
-categories:"د مرستې برخې",requests:"د خلکو د مرستې غوښتنې",
-refresh:"بیا تازه کول",
-items:["خواړه","زده کړې","روغتیا","ویزه","جامې","رضاکارانه مرسته"],
-need:"مهرباني وکړئ اړین معلومات بشپړ کړئ.",
-success:"حساب جوړ شو. خپل ایمیل وګورئ.",
-logged:"په بریالیتوب سره ننوتل.",
-saved:"ستاسو د مرستې غوښتنه ثبت شوه.",
-loading:"مهرباني وکړئ انتظار وکړئ...",
-signed:"تاسو ننوتلي یاست: ",
-error:"ستونزه: ",empty:"اوسمهال غوښتنې نشته.",
-status:"حالت: ",cityLabel:"ښار: ",
-admin:"تاسو Admin یاست.",
-approve:"تایید",reject:"رد",
-approved:"غوښتنه تایید شوه.",
-rejected:"غوښتنه رد شوه.",
-pending:"د تایید په تمه",
-approvedStatus:"تایید شوې",
-rejectedStatus:"رد شوې",
-report:"Report کول",
-reportReason:"د Report دلیل ولیکئ:",
-reportSent:"Report واستول شو.",
-reportEmpty:"د Report دلیل ولیکئ.",
-reports:"د Admin راپورونه",
-noReports:"تر اوسه Report نشته.",
-reviewed:"کتل شوی",
-markReviewed:"د کتلو حالت ورکړه",
-reporter:"راپور ورکوونکی",
-post:"پوسټ",
-reason:"دلیل"
-},
-en:{
-welcome:"The Bridge of Help — Free Help for Everyone",
-auth:"Create a New Account",name:"Full Name",email:"Email",
-password:"Password",signup:"Sign Up",login:"Login",
-logout:"Logout",request:"Submit a Help Request",
-title:"Request Title",description:"Describe your request",
-country:"Country",city:"City",submit:"Submit Request",
-categories:"Help Categories",requests:"Community Help Requests",
-refresh:"Refresh",
-items:["Food","Education","Healthcare","Visa","Clothing","Volunteering"],
-need:"Please complete the required fields.",
-success:"Account created. Check your email.",
-logged:"Login successful.",
-saved:"Your help request has been submitted.",
-loading:"Please wait...",
-signed:"You are logged in: ",
-error:"Error: ",empty:"No requests available.",
-status:"Status: ",cityLabel:"City: ",
-admin:"You are an Admin.",
-approve:"Approve",reject:"Reject",
-approved:"Request approved.",
-rejected:"Request rejected.",
-pending:"Pending",
-approvedStatus:"Approved",
-rejectedStatus:"Rejected",
-report:"Report",
-reportReason:"Enter report reason:",
-reportSent:"Report submitted.",
-reportEmpty:"Please enter a report reason.",
-reports:"Admin Reports Panel",
-noReports:"No reports available.",
-reviewed:"Reviewed",
-markReviewed:"Mark Reviewed",
-reporter:"Reporter",
-post:"Post",
-reason:"Reason"
-}
-};
-
-function changeLang(l){
-lang=l;
-document.documentElement.lang=l;
-document.documentElement.dir=l==="ps"?"rtl":"ltr";
-const w=words[l];
-
-$("welcome").textContent=w.welcome;
-$("authTitle").textContent=w.auth;
-$("name").placeholder=w.name;
-$("email").placeholder=w.email;
-$("password").placeholder=w.password;
-$("signupBtn").textContent=w.signup;
-$("loginBtn").textContent=w.login;
-$("logoutBtn").textContent=w.logout;
-$("requestTitle").textContent=w.request;
-$("title").placeholder=w.title;
-$("description").placeholder=w.description;
-$("country").placeholder=w.country;
-$("city").placeholder=w.city;
-$("submitBtn").textContent=w.submit;
-$("categoriesTitle").textContent=w.categories;
-$("requestsTitle").textContent=w.requests;
-$("refreshBtn").textContent=w.refresh;
-$("adminReportsTitle").textContent=w.reports;
-$("reportsRefresh").textContent=w.refresh;
-
-$("category").innerHTML=w.items.map((x,i)=>
-`<option value="${["Food","Education","Healthcare","Visa","Clothing","Volunteering"][i]}">${x}</option>`
-).join("");
-
-$("categories").replaceChildren();
-w.items.forEach(x=>{
-const p=document.createElement("p");
-p.textContent=x;
-$("categories").appendChild(p);
-});
-
-$("adminStatus").textContent=isAdmin?w.admin:"";
+function msg(text){
+  document.getElementById("message").textContent = text;
 }
 
-function msg(t){$("message").textContent=t;}
+function escapeHTML(value){
+  return String(value || "").replace(/[&<>"']/g, function(c){
+    return {
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[c];
+  });
+}
 
 async function signup(){
-const n=$("name").value.trim();
-const e=$("email").value.trim();
-const p=$("password").value;
-if(!n||!e||!p){msg(words[lang].need);return;}
-msg(words[lang].loading);
-const {error}=await db.auth.signUp({
-email:e,password:p,options:{data:{full_name:n}}
-});
-if(error)msg(words[lang].error+error.message);
-else msg(words[lang].success);
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    msg("Email او Password ولیکه");
+    return;
+  }
+
+  const {error} = await db.auth.signUp({
+    email,
+    password
+  });
+
+  if(error){
+    msg(error.message);
+    return;
+  }
+
+  msg("حساب جوړ شو. که Email confirmation وغواړي، خپل Email تایید کړه.");
 }
 
 async function login(){
-const e=$("email").value.trim();
-const p=$("password").value;
-if(!e||!p){msg(words[lang].need);return;}
-msg(words[lang].loading);
-const {error}=await db.auth.signInWithPassword({email:e,password:p});
-if(error)msg(words[lang].error+error.message);
-else{
-msg(words[lang].logged);
-await updateUser();
-}
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    msg("Email او Password ولیکه");
+    return;
+  }
+
+  const {error} = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    msg(error.message);
+    return;
+  }
+
+  msg("Login successful");
+  await updateUser();
 }
 
 async function logout(){
-const {error}=await db.auth.signOut();
-if(error)msg(words[lang].error+error.message);
-else msg(words[lang].logout);
-await updateUser();
+  const {error} = await db.auth.signOut();
+
+  if(error){
+    msg(error.message);
+    return;
+  }
+
+  currentUser = null;
+  isAdmin = false;
+  updateUI();
+  msg("Logout successful");
 }
 
-async function checkAdmin(){
-isAdmin=false;
-if(!currentUser)return;
-const {data,error}=await db.from("nb_admins")
-.select("user_id")
-.eq("user_id",currentUser.id)
-.maybeSingle();
-if(error){console.error(error.message);return;}
-isAdmin=!!data;
+function updateUI(){
+  document.getElementById("userStatus").textContent =
+    currentUser ? "Logged in: " + currentUser.email : "لاګین نه یې";
+
+  document.getElementById("adminPanel").classList.toggle("hidden", !isAdmin);
+  document.getElementById("reportsPanel").classList.toggle("hidden", !isAdmin);
 }
 
 async function updateUser(){
-const {data}=await db.auth.getUser();
-currentUser=data.user||null;
+  const {data} = await db.auth.getUser();
+  currentUser = data.user || null;
+  isAdmin = false;
 
-$("userStatus").textContent=currentUser?
-words[lang].signed+currentUser.email:"";
-$("requestSection").hidden=!currentUser;
-$("requestsSection").hidden=false;
-$("logoutBtn").hidden=!currentUser;
-$("signupBtn").hidden=!!currentUser;
-$("loginBtn").hidden=!!currentUser;
-$("name").hidden=!!currentUser;
+  if(currentUser){
+    const {data: adminData, error} = await db
+      .from("nb_admins")
+      .select("user_id")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
 
-await checkAdmin();
-$("adminStatus").textContent=isAdmin?words[lang].admin:"";
-$("adminReportsSection").hidden=!isAdmin;
+    if(!error && adminData){
+      isAdmin = true;
+    }
+  }
 
-await loadRequests();
-if(isAdmin)await loadAdminReports();
+  updateUI();
+  await loadRequests();
+
+  if(isAdmin){
+    await loadReports();
+  }
 }
 
-async function submitRequest(){
-if(!currentUser)return;
-const t=$("title").value.trim();
-const d=$("description").value.trim();
-const c=$("country").value.trim();
-const cityName=$("city").value.trim();
+async function submitPost(){
+  if(!currentUser){
+    msg("لومړی Login وکړه");
+    return;
+  }
 
-if(!t||!d||!c||!cityName){
-$("requestMessage").textContent=words[lang].need;
-return;
-}
+  const title = document.getElementById("postTitle").value.trim();
+  const category = document.getElementById("category").value;
+  const description = document.getElementById("description").value.trim();
+  const country = document.getElementById("country").value.trim();
+  const city = document.getElementById("city").value.trim();
 
-$("requestMessage").textContent=words[lang].loading;
-const chosenCategory=$("category").value;
-const {error}=await db.from("nb_posts").insert({
-owner_id:currentUser.id,
-title:t,
-post_type:"request",
-status:"pending",
-description:"Category: "+chosenCategory+"\n"+d,
-country:c,
-city:cityName
-});
+  if(!title || !category || !description){
+    msg("سرلیک، کټګوري او معلومات ولیکه");
+    return;
+  }
 
-if(error){
-$("requestMessage").textContent=words[lang].error+error.message;
-}else{
-$("requestMessage").textContent=words[lang].saved;
-$("title").value="";
-$("description").value="";
-$("country").value="";
-$("city").value="";
-await loadRequests();
-}
-}
+  const {error} = await db.from("nb_posts").insert({
+    owner_id: currentUser.id,
+    title: title,
+    post_type: "request",
+    status: "pending",
+    description: "Category: " + category + "\n" + description,
+    country: country,
+    city: city
+  });
 
-function statusText(status){
-const w=words[lang];
-if(status==="pending")return w.pending;
-if(status==="approved")return w.approvedStatus;
-if(status==="rejected")return w.rejectedStatus;
-return status||"";
-}
+  if(error){
+    msg("Error: " + error.message);
+    return;
+  }
 
-async function reviewRequest(postId,newStatus){
-if(!isAdmin)return;
-const w=words[lang];
-const message=newStatus==="approved"?w.approved:w.rejected;
-if(!confirm(message+"?"))return;
+  msg("Your help request has been submitted.");
+  document.getElementById("postTitle").value = "";
+  document.getElementById("description").value = "";
+  document.getElementById("country").value = "";
+  document.getElementById("city").value = "";
 
-const {error}=await db.from("nb_posts")
-.update({
-status:newStatus,
-reviewed_at:new Date().toISOString(),
-reviewed_by:currentUser.id
-})
-.eq("id",postId);
-
-if(error){alert(w.error+error.message);return;}
-alert(message);
-await loadRequests();
-}
-
-async function reportPost(postId){
-if(!currentUser){
-alert("Please login to report.");
-return;
-}
-const reason=prompt(words[lang].reportReason);
-if(!reason||!reason.trim())return;
-
-const {error}=await db.from("nb_reports").insert({
-reporter_id:currentUser.id,
-post_id:postId,
-reason:reason.trim()
-});
-
-if(error)alert(words[lang].error+error.message);
-else alert(words[lang].reportSent);
+  await loadRequests();
 }
 
 async function loadRequests(){
-const box=$("publicRequests");
-box.textContent=words[lang].loading;
+  const postsBox = document.getElementById("posts");
+  const adminBox = document.getElementById("adminPosts");
 
-const {data,error}=await db.from("nb_posts")
-.select("id,owner_id,title,description,country,city,status,created_at")
-.order("created_at",{ascending:false})
-.limit(50);
+  postsBox.textContent = "Loading...";
 
-if(error){
-box.textContent=words[lang].error+error.message;
-return;
+  const {data, error} = await db
+    .from("nb_posts")
+    .select("id,owner_id,title,post_type,status,description,country,city,created_at")
+    .order("created_at", {ascending:false});
+
+  if(error){
+    postsBox.textContent = "Error: " + error.message;
+    return;
+  }
+
+  postsBox.innerHTML = "";
+  adminBox.innerHTML = "";
+
+  if(!data || data.length === 0){
+    postsBox.textContent = "No requests found.";
+    return;
+  }
+
+  data.forEach(post => {
+    const div = document.createElement("div");
+    div.className = "post";
+
+    div.innerHTML = `
+      <h3>${escapeHTML(post.title)}</h3>
+      <p>${escapeHTML(post.description)}</p>
+      <p>${escapeHTML(post.city)} ${escapeHTML(post.country)}</p>
+      <p class="status">Status: ${escapeHTML(post.status)}</p>
+    `;
+
+    if(currentUser && post.owner_id !== currentUser.id &&
+       post.status === "approved"){
+      const reportBtn = document.createElement("button");
+      reportBtn.className = "danger";
+      reportBtn.textContent = "Report";
+      reportBtn.onclick = () => reportPost(post.id);
+      div.appendChild(reportBtn);
+    }
+
+    postsBox.appendChild(div);
+
+    if(isAdmin && post.status === "pending"){
+      const adminDiv = document.createElement("div");
+      adminDiv.className = "post";
+      adminDiv.innerHTML =
+        `<h3>${escapeHTML(post.title)}</h3>
+         <p>${escapeHTML(post.description)}</p>`;
+
+      const approveBtn = document.createElement("button");
+      approveBtn.className = "green";
+      approveBtn.textContent = "Approve";
+      approveBtn.onclick = () => changePostStatus(post.id, "approved");
+
+      const rejectBtn = document.createElement("button");
+      rejectBtn.className = "danger";
+      rejectBtn.textContent = "Reject";
+      rejectBtn.onclick = () => changePostStatus(post.id, "rejected");
+
+      adminDiv.appendChild(approveBtn);
+      adminDiv.appendChild(rejectBtn);
+      adminBox.appendChild(adminDiv);
+    }
+  });
 }
-box.replaceChildren();
 
-if(!data||data.length===0){
-box.textContent=words[lang].empty;
-return;
+async function changePostStatus(postId, status){
+  if(!isAdmin){
+    msg("Admin access required");
+    return;
+  }
+
+  const {error} = await db
+    .from("nb_posts")
+    .update({status:status})
+    .eq("id", postId);
+
+  if(error){
+    msg("Update error: " + error.message);
+    return;
+  }
+
+  msg("Request status changed to " + status);
+  await loadRequests();
 }
 
-data.forEach(post=>{
-const card=document.createElement("div");
-card.className="request-card";
+async function reportPost(postId){
+  if(!currentUser){
+    msg("لومړی Login وکړه");
+    return;
+  }
 
-const heading=document.createElement("h3");
-heading.textContent=post.title||"";
-const desc=document.createElement("p");
-desc.textContent=(post.description||"").replace(/^Category:\s*[^\n]*\n?/,"");
-const location=document.createElement("p");
-location.textContent=words[lang].cityLabel+(post.city||"")+
-(post.country?" — "+post.country:"");
-const status=document.createElement("p");
-status.textContent=words[lang].status+statusText(post.status);
-card.append(heading,desc,location,status);
+  const reason = prompt("د راپور دلیل ولیکه:");
 
-if(isAdmin&&post.status==="pending"){
-const approveBtn=document.createElement("button");
-approveBtn.className="approve";
-approveBtn.textContent=words[lang].approve;
-approveBtn.onclick=()=>reviewRequest(post.id,"approved");
-const rejectBtn=document.createElement("button");
-rejectBtn.className="reject";
-rejectBtn.textContent=words[lang].reject;
-rejectBtn.onclick=()=>reviewRequest(post.id,"rejected");
-card.append(approveBtn,rejectBtn);
+  if(!reason || !reason.trim()){
+    return;
+  }
+
+  const {error} = await db.from("nb_reports").insert({
+    reporter_id: currentUser.id,
+    post_id: postId,
+    reason: reason.trim()
+  });
+
+  if(error){
+    msg("Report error: " + error.message);
+    return;
+  }
+
+  msg("Report submitted.");
 }
 
-if(currentUser&&post.owner_id!==currentUser.id&&post.status==="approved"){
-const reportBtn=document.createElement("button");
-reportBtn.className="report";
-reportBtn.textContent=words[lang].report;
-reportBtn.onclick=()=>reportPost(post.id);
-card.append(reportBtn);
+async function loadReports(){
+  if(!isAdmin){
+    return;
+  }
+
+  const box = document.getElementById("reportList");
+  box.textContent = "Loading reports...";
+
+  const {data, error} = await db
+    .from("nb_reports")
+    .select("id,post_id,reporter_id,reason,status,created_at")
+    .order("created_at", {ascending:false});
+
+  if(error){
+    box.textContent = "Reports error: " + error.message;
+    return;
+  }
+
+  box.innerHTML = "";
+
+  if(!data || data.length === 0){
+    box.textContent = "No reports found.";
+    return;
+  }
+
+  data.forEach(report => {
+    const div = document.createElement("div");
+    div.className = "post";
+
+    div.innerHTML = `
+      <h3>Report</h3>
+      <p>Post ID: ${escapeHTML(report.post_id)}</p>
+      <p>Reason: ${escapeHTML(report.reason)}</p>
+      <p>Reporter: ${escapeHTML(report.reporter_id)}</p>
+      <p>Status: ${escapeHTML(report.status)}</p>
+      <p>Date: ${escapeHTML(report.created_at)}</p>
+    `;
+
+    if(report.status !== "reviewed"){
+      const button = document.createElement("button");
+      button.className = "green";
+      button.textContent = "Mark Reviewed";
+      button.onclick = () => markReviewed(report.id);
+      div.appendChild(button);
+    }
+
+    box.appendChild(div);
+  });
 }
-box.appendChild(card);
+
+async function markReviewed(reportId){
+  if(!isAdmin){
+    msg("Admin access required");
+    return;
+  }
+
+  const {error} = await db
+    .from("nb_reports")
+    .update({status:"reviewed"})
+    .eq("id", reportId);
+
+  if(error){
+    msg("Review error: " + error.message);
+    return;
+  }
+
+  msg("Report marked as reviewed.");
+  await loadReports();
+}
+
+function toggleLanguage(){
+  language = language === "ps" ? "en" : "ps";
+  document.documentElement.lang = language;
+  document.documentElement.dir = language === "ps" ? "rtl" : "ltr";
+  msg(language === "ps" ? "پښتو ژبه" : "English language");
+}
+
+db.auth.onAuthStateChange(() => {
+  setTimeout(() => {
+    updateUser();
+  }, 0);
 });
-}
 
-async function loadAdminReports(){
-if(!currentUser||!isAdmin)return;
-
-const list=$("reportList");
-list.textContent=words[lang].loading;
-
-const {data,error}=await db.from("nb_reports")
-.select("id,post_id,reporter_id,reason,status,created_at")
-.order("created_at",{ascending:false});
-
-if(error){
-list.textContent=words[lang].error+error.message;
-return;
-}
-list.replaceChildren();
-
-if(!data||data.length===0){
-list.textContent=words[lang].noReports;
-return;
-}
-
-data.forEach(r=>{
-const card=document.createElement("div");
-card.className="request-card";
-
-const reason=document.createElement("p");
-reason.textContent=words[lang].reason+": "+r.reason;
-
-const post=document.createElement("p");
-post.textContent=words[lang].post+": "+r.post_id;
-
-const reporter=document.createElement("p");
-reporter.textContent=words[lang].reporter+": "+r.reporter_id;
-
-const status=document.createElement("p");
-status.textContent=words[lang].status+": "+(r.status||"pending");
-
-card.append(reason,post,reporter,status);
-
-if(r.status!=="reviewed"){
-const btn=document.createElement("button");
-btn.className="approve";
-btn.textContent=words[lang].markReviewed;
-btn.onclick=()=>markReportReviewed(r.id);
-card.appendChild(btn);
-}
-list.appendChild(card);
-});
-}
-
-async function markReportReviewed(reportId){
-if(!isAdmin)return;
-
-const {error}=await db.from("nb_reports")
-.update({status:"reviewed"})
-.eq("id",reportId);
-
-if(error){
-alert(words[lang].error+error.message);
-return;
-}
-await loadAdminReports();
-}
-
-db.auth.onAuthStateChange(()=>{
-setTimeout(()=>updateUser(),0);
-});
-
-changeLang("ps");
 updateUser();
 </script>
 </body>
