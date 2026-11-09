@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ps" dir="rtl">
 <head>
@@ -13,7 +14,7 @@ button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8
 .approve{background:#15803d}
 .reject{background:#dc2626}
 .report{background:#b45309}
-.request-card{background:#f1f5f9;padding:12px;margin:10px 0;border-radius:8px;text-align:start}
+.request-card{background:#f1f5f9;padding:12px;margin:10px 0;border-radius:8px;text-align:start;overflow-wrap:anywhere}
 #message,#requestMessage{color:#075985}
 #adminStatus{color:#15803d;font-weight:bold}
 </style>
@@ -69,6 +70,12 @@ button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8
 <div id="categories"></div>
 </section>
 
+<section id="adminReportsSection" hidden>
+<h2 id="adminReportsTitle">Admin Reports Panel</h2>
+<button onclick="loadAdminReports()" id="reportsRefresh">Refresh Reports</button>
+<div id="reportList"></div>
+</section>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const db=window.supabase.createClient(
@@ -110,7 +117,14 @@ rejectedStatus:"رد شوې",
 report:"Report کول",
 reportReason:"د Report دلیل ولیکئ:",
 reportSent:"Report واستول شو.",
-reportEmpty:"د Report دلیل ولیکئ."
+reportEmpty:"د Report دلیل ولیکئ.",
+reports:"د Admin راپورونه",
+noReports:"تر اوسه Report نشته.",
+reviewed:"کتل شوی",
+markReviewed:"د کتلو حالت ورکړه",
+reporter:"راپور ورکوونکی",
+post:"پوسټ",
+reason:"دلیل"
 },
 en:{
 welcome:"The Bridge of Help — Free Help for Everyone",
@@ -140,7 +154,14 @@ rejectedStatus:"Rejected",
 report:"Report",
 reportReason:"Enter report reason:",
 reportSent:"Report submitted.",
-reportEmpty:"Please enter a report reason."
+reportEmpty:"Please enter a report reason.",
+reports:"Admin Reports Panel",
+noReports:"No reports available.",
+reviewed:"Reviewed",
+markReviewed:"Mark Reviewed",
+reporter:"Reporter",
+post:"Post",
+reason:"Reason"
 }
 };
 
@@ -167,6 +188,8 @@ $("submitBtn").textContent=w.submit;
 $("categoriesTitle").textContent=w.categories;
 $("requestsTitle").textContent=w.requests;
 $("refreshBtn").textContent=w.refresh;
+$("adminReportsTitle").textContent=w.reports;
+$("reportsRefresh").textContent=w.refresh;
 
 $("category").innerHTML=w.items.map((x,i)=>
 `<option value="${["Food","Education","Healthcare","Visa","Clothing","Volunteering"][i]}">${x}</option>`
@@ -188,14 +211,11 @@ async function signup(){
 const n=$("name").value.trim();
 const e=$("email").value.trim();
 const p=$("password").value;
-
 if(!n||!e||!p){msg(words[lang].need);return;}
 msg(words[lang].loading);
-
 const {error}=await db.auth.signUp({
 email:e,password:p,options:{data:{full_name:n}}
 });
-
 if(error)msg(words[lang].error+error.message);
 else msg(words[lang].success);
 }
@@ -203,12 +223,9 @@ else msg(words[lang].success);
 async function login(){
 const e=$("email").value.trim();
 const p=$("password").value;
-
 if(!e||!p){msg(words[lang].need);return;}
 msg(words[lang].loading);
-
 const {error}=await db.auth.signInWithPassword({email:e,password:p});
-
 if(error)msg(words[lang].error+error.message);
 else{
 msg(words[lang].logged);
@@ -226,17 +243,11 @@ await updateUser();
 async function checkAdmin(){
 isAdmin=false;
 if(!currentUser)return;
-
-const {data,error}=await db
-.from("nb_admins")
+const {data,error}=await db.from("nb_admins")
 .select("user_id")
 .eq("user_id",currentUser.id)
 .maybeSingle();
-
-if(error){
-console.error(error.message);
-return;
-}
+if(error){console.error(error.message);return;}
 isAdmin=!!data;
 }
 
@@ -246,7 +257,6 @@ currentUser=data.user||null;
 
 $("userStatus").textContent=currentUser?
 words[lang].signed+currentUser.email:"";
-
 $("requestSection").hidden=!currentUser;
 $("requestsSection").hidden=false;
 $("logoutBtn").hidden=!currentUser;
@@ -256,12 +266,14 @@ $("name").hidden=!!currentUser;
 
 await checkAdmin();
 $("adminStatus").textContent=isAdmin?words[lang].admin:"";
+$("adminReportsSection").hidden=!isAdmin;
+
 await loadRequests();
+if(isAdmin)await loadAdminReports();
 }
 
 async function submitRequest(){
 if(!currentUser)return;
-
 const t=$("title").value.trim();
 const d=$("description").value.trim();
 const c=$("country").value.trim();
@@ -274,7 +286,6 @@ return;
 
 $("requestMessage").textContent=words[lang].loading;
 const chosenCategory=$("category").value;
-
 const {error}=await db.from("nb_posts").insert({
 owner_id:currentUser.id,
 title:t,
@@ -307,7 +318,6 @@ return status||"";
 
 async function reviewRequest(postId,newStatus){
 if(!isAdmin)return;
-
 const w=words[lang];
 const message=newStatus==="approved"?w.approved:w.rejected;
 if(!confirm(message+"?"))return;
@@ -320,21 +330,16 @@ reviewed_by:currentUser.id
 })
 .eq("id",postId);
 
-if(error){
-alert(w.error+error.message);
-return;
-}
-
+if(error){alert(w.error+error.message);return;}
 alert(message);
 await loadRequests();
 }
 
 async function reportPost(postId){
 if(!currentUser){
-alert(lang==="ps"?"د Report لپاره Login وکړئ.":"Please login to report.");
+alert("Please login to report.");
 return;
 }
-
 const reason=prompt(words[lang].reportReason);
 if(!reason||!reason.trim())return;
 
@@ -344,11 +349,8 @@ post_id:postId,
 reason:reason.trim()
 });
 
-if(error){
-alert(words[lang].error+error.message);
-}else{
-alert(words[lang].reportSent);
-}
+if(error)alert(words[lang].error+error.message);
+else alert(words[lang].reportSent);
 }
 
 async function loadRequests(){
@@ -364,7 +366,6 @@ if(error){
 box.textContent=words[lang].error+error.message;
 return;
 }
-
 box.replaceChildren();
 
 if(!data||data.length===0){
@@ -378,18 +379,13 @@ card.className="request-card";
 
 const heading=document.createElement("h3");
 heading.textContent=post.title||"";
-
 const desc=document.createElement("p");
-const raw=post.description||"";
-desc.textContent=raw.replace(/^Category:\s*[^\n]*\n?/,"");
-
+desc.textContent=(post.description||"").replace(/^Category:\s*[^\n]*\n?/,"");
 const location=document.createElement("p");
 location.textContent=words[lang].cityLabel+(post.city||"")+
 (post.country?" — "+post.country:"");
-
 const status=document.createElement("p");
 status.textContent=words[lang].status+statusText(post.status);
-
 card.append(heading,desc,location,status);
 
 if(isAdmin&&post.status==="pending"){
@@ -397,12 +393,10 @@ const approveBtn=document.createElement("button");
 approveBtn.className="approve";
 approveBtn.textContent=words[lang].approve;
 approveBtn.onclick=()=>reviewRequest(post.id,"approved");
-
 const rejectBtn=document.createElement("button");
 rejectBtn.className="reject";
 rejectBtn.textContent=words[lang].reject;
 rejectBtn.onclick=()=>reviewRequest(post.id,"rejected");
-
 card.append(approveBtn,rejectBtn);
 }
 
@@ -413,9 +407,72 @@ reportBtn.textContent=words[lang].report;
 reportBtn.onclick=()=>reportPost(post.id);
 card.append(reportBtn);
 }
-
 box.appendChild(card);
 });
+}
+
+async function loadAdminReports(){
+if(!currentUser||!isAdmin)return;
+
+const list=$("reportList");
+list.textContent=words[lang].loading;
+
+const {data,error}=await db.from("nb_reports")
+.select("id,post_id,reporter_id,reason,status,created_at")
+.order("created_at",{ascending:false});
+
+if(error){
+list.textContent=words[lang].error+error.message;
+return;
+}
+list.replaceChildren();
+
+if(!data||data.length===0){
+list.textContent=words[lang].noReports;
+return;
+}
+
+data.forEach(r=>{
+const card=document.createElement("div");
+card.className="request-card";
+
+const reason=document.createElement("p");
+reason.textContent=words[lang].reason+": "+r.reason;
+
+const post=document.createElement("p");
+post.textContent=words[lang].post+": "+r.post_id;
+
+const reporter=document.createElement("p");
+reporter.textContent=words[lang].reporter+": "+r.reporter_id;
+
+const status=document.createElement("p");
+status.textContent=words[lang].status+": "+(r.status||"pending");
+
+card.append(reason,post,reporter,status);
+
+if(r.status!=="reviewed"){
+const btn=document.createElement("button");
+btn.className="approve";
+btn.textContent=words[lang].markReviewed;
+btn.onclick=()=>markReportReviewed(r.id);
+card.appendChild(btn);
+}
+list.appendChild(card);
+});
+}
+
+async function markReportReviewed(reportId){
+if(!isAdmin)return;
+
+const {error}=await db.from("nb_reports")
+.update({status:"reviewed"})
+.eq("id",reportId);
+
+if(error){
+alert(words[lang].error+error.message);
+return;
+}
+await loadAdminReports();
 }
 
 db.auth.onAuthStateChange(()=>{
