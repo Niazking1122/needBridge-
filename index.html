@@ -11,7 +11,6 @@ header,section{background:white;padding:18px;margin:15px auto;border-radius:12px
 header{background:#075985;color:white}
 input,textarea,select{box-sizing:border-box;width:95%;padding:12px;margin:8px;border:1px solid #ccc;border-radius:8px}
 button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8px;margin:5px;cursor:pointer}
-button:disabled{opacity:.5}
 .approve{background:#15803d}
 .reject{background:#dc2626}
 .request-card{background:#f1f5f9;padding:12px;margin:10px 0;border-radius:8px;text-align:start}
@@ -59,7 +58,7 @@ button:disabled{opacity:.5}
 <p id="requestMessage"></p>
 </section>
 
-<section id="requestsSection" hidden>
+<section id="requestsSection">
 <h2 id="requestsTitle">د خلکو د مرستې غوښتنې</h2>
 <button onclick="loadRequests()" id="refreshBtn">بیا تازه کول</button>
 <div id="publicRequests"></div>
@@ -72,17 +71,17 @@ button:disabled{opacity:.5}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const db = window.supabase.createClient(
+const db=window.supabase.createClient(
 "https://urozgfqxtbjmejyyocow.supabase.co",
 "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T"
 );
 
-const $ = id => document.getElementById(id);
-let lang = "ps";
-let currentUser = null;
-let isAdmin = false;
+const $=id=>document.getElementById(id);
+let lang="ps";
+let currentUser=null;
+let isAdmin=false;
 
-const words = {
+const words={
 ps:{
 welcome:"د مرستې پل — وړیا مرسته د ټولو لپاره",
 auth:"نوی حساب جوړ کړئ",name:"بشپړ نوم",email:"ایمیل",
@@ -90,8 +89,8 @@ password:"پاسورډ",signup:"حساب جوړول",login:"ننوتل",
 logout:"وتل",request:"د مرستې غوښتنه ثبت کړئ",
 title:"د غوښتنې سرلیک",description:"خپله غوښتنه تشریح کړئ",
 country:"هېواد",city:"ښار",submit:"غوښتنه ثبتول",
-categories:"د مرستې برخې",
-requests:"د خلکو د مرستې غوښتنې",refresh:"بیا تازه کول",
+categories:"د مرستې برخې",requests:"د خلکو د مرستې غوښتنې",
+refresh:"بیا تازه کول",
 items:["خواړه","زده کړې","روغتیا","ویزه","جامې","رضاکارانه مرسته"],
 need:"مهرباني وکړئ اړین معلومات بشپړ کړئ.",
 success:"حساب جوړ شو. خپل ایمیل وګورئ.",
@@ -99,8 +98,7 @@ logged:"په بریالیتوب سره ننوتل.",
 saved:"ستاسو د مرستې غوښتنه ثبت شوه.",
 loading:"مهرباني وکړئ انتظار وکړئ...",
 signed:"تاسو ننوتلي یاست: ",
-error:"ستونزه: ",
-empty:"اوسمهال غوښتنې نشته.",
+error:"ستونزه: ",empty:"اوسمهال غوښتنې نشته.",
 status:"حالت: ",cityLabel:"ښار: ",
 admin:"تاسو Admin یاست.",
 approve:"تایید",reject:"رد",
@@ -108,8 +106,7 @@ approved:"غوښتنه تایید شوه.",
 rejected:"غوښتنه رد شوه.",
 pending:"د تایید په تمه",
 approvedStatus:"تایید شوې",
-rejectedStatus:"رد شوې",
-notAdmin:""
+rejectedStatus:"رد شوې"
 },
 en:{
 welcome:"The Bridge of Help — Free Help for Everyone",
@@ -118,8 +115,8 @@ password:"Password",signup:"Sign Up",login:"Login",
 logout:"Logout",request:"Submit a Help Request",
 title:"Request Title",description:"Describe your request",
 country:"Country",city:"City",submit:"Submit Request",
-categories:"Help Categories",
-requests:"Community Help Requests",refresh:"Refresh",
+categories:"Help Categories",requests:"Community Help Requests",
+refresh:"Refresh",
 items:["Food","Education","Healthcare","Visa","Clothing","Volunteering"],
 need:"Please complete the required fields.",
 success:"Account created. Check your email if confirmation is required.",
@@ -127,8 +124,7 @@ logged:"Login successful.",
 saved:"Your help request has been submitted.",
 loading:"Please wait...",
 signed:"You are logged in: ",
-error:"Error: ",
-empty:"No requests available.",
+error:"Error: ",empty:"No requests available.",
 status:"Status: ",cityLabel:"City: ",
 admin:"You are an Admin.",
 approve:"Approve",reject:"Reject",
@@ -136,8 +132,7 @@ approved:"Request approved.",
 rejected:"Request rejected.",
 pending:"Pending",
 approvedStatus:"Approved",
-rejectedStatus:"Rejected",
-notAdmin:""
+rejectedStatus:"Rejected"
 }
 };
 
@@ -227,7 +222,7 @@ const {data,error}=await db
 .maybeSingle();
 
 if(error){
-console.error("Admin check:",error.message);
+console.error(error.message);
 return;
 }
 isAdmin=!!data;
@@ -241,7 +236,7 @@ $("userStatus").textContent=currentUser?
 words[lang].signed+currentUser.email:"";
 
 $("requestSection").hidden=!currentUser;
-$("requestsSection").hidden=!currentUser;
+$("requestsSection").hidden=false;
 $("logoutBtn").hidden=!currentUser;
 $("signupBtn").hidden=!!currentUser;
 $("loginBtn").hidden=!!currentUser;
@@ -250,15 +245,11 @@ $("name").hidden=!!currentUser;
 await checkAdmin();
 $("adminStatus").textContent=isAdmin?words[lang].admin:"";
 
-if(currentUser)await loadRequests();
-else $("publicRequests").textContent="";
+await loadRequests();
 }
 
 async function submitRequest(){
-if(!currentUser){
-$("requestMessage").textContent=words[lang].need;
-return;
-}
+if(!currentUser)return;
 
 const t=$("title").value.trim();
 const d=$("description").value.trim();
@@ -304,17 +295,13 @@ return status||"";
 }
 
 async function reviewRequest(postId,newStatus){
-if(!isAdmin){
-alert("Admin access required");
-return;
-}
+if(!isAdmin)return;
 
 const w=words[lang];
 const message=newStatus==="approved"?w.approved:w.rejected;
 if(!confirm(message+"?"))return;
 
-const {error}=await db
-.from("nb_posts")
+const {error}=await db.from("nb_posts")
 .update({
 status:newStatus,
 reviewed_at:new Date().toISOString(),
@@ -332,16 +319,15 @@ await loadRequests();
 }
 
 async function loadRequests(){
-if(!currentUser)return;
-
 const box=$("publicRequests");
 box.textContent=words[lang].loading;
 
-const {data,error}=await db
-.from("nb_posts")
+let query=db.from("nb_posts")
 .select("id,title,description,country,city,status,created_at")
 .order("created_at",{ascending:false})
 .limit(50);
+
+const {data,error}=await query;
 
 if(error){
 box.textContent=words[lang].error+error.message;
