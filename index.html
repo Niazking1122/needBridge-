@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ps" dir="rtl">
 <head>
@@ -6,11 +7,12 @@
 <title>NeedBridge</title>
 <style>
 body{font-family:Arial;background:#f1f5f9;margin:0;padding:15px;color:#172554}
-header,section{background:white;padding:18px;margin:15px auto;border-radius:12px;max-width:500px;text-align:center}
+header,section{background:white;padding:18px;margin:15px auto;border-radius:12px;max-width:550px;text-align:center}
 header{background:#075985;color:white}
 input,textarea,select{box-sizing:border-box;width:95%;padding:12px;margin:8px;border:1px solid #ccc;border-radius:8px}
-button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8px;margin:5px}
-#message{color:#075985}
+button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8px;margin:5px;cursor:pointer}
+.request-card{background:#f1f5f9;padding:12px;margin:10px 0;border-radius:8px;text-align:start}
+#message,#requestMessage{color:#075985}
 </style>
 </head>
 <body>
@@ -54,6 +56,12 @@ button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8
 <p id="requestMessage"></p>
 </section>
 
+<section id="requestsSection" hidden>
+<h2 id="requestsTitle">د خلکو د مرستې غوښتنې</h2>
+<button onclick="loadRequests()" id="refreshBtn">بیا تازه کول</button>
+<div id="publicRequests"></div>
+</section>
+
 <section>
 <h2 id="categoriesTitle">د مرستې برخې</h2>
 <div id="categories"></div>
@@ -62,155 +70,234 @@ button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const db = window.supabase.createClient(
- "https://urozgfqxtbjmejyyocow.supabase.co",
- "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T"
+"https://urozgfqxtbjmejyyocow.supabase.co",
+"sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T"
 );
 
+const $ = id => document.getElementById(id);
 let lang = "ps";
 
 const words = {
- ps:{
-  welcome:"د مرستې پل — وړیا مرسته د ټولو لپاره",
-  auth:"نوی حساب جوړ کړئ",name:"بشپړ نوم",email:"ایمیل",
-  password:"پاسورډ",signup:"حساب جوړول",login:"ننوتل",
-  logout:"وتل",request:"د مرستې غوښتنه ثبت کړئ",
-  title:"د غوښتنې سرلیک",description:"خپله غوښتنه تشریح کړئ",
-  country:"هېواد",city:"ښار",submit:"غوښتنه ثبتول",
-  categories:"د مرستې برخې",
-  items:["خواړه","زده کړې","روغتیا","ویزه","جامې","رضاکارانه مرسته"],
-  need:"مهرباني وکړئ اړین معلومات بشپړ کړئ.",
-  success:"حساب جوړ شو. که ایمیل تایید غواړي، خپل ایمیل وګورئ.",
-  logged:"په بریالیتوب سره ننوتل.",
-  saved:"ستاسو د مرستې غوښتنه ثبت شوه.",
-  loading:"مهرباني وکړئ انتظار وکړئ...",
-  signed:"تاسو ننوتلي یاست: ",
-  error:"ستونزه: "
- },
- en:{
-  welcome:"The Bridge of Help — Free Help for Everyone",
-  auth:"Create a New Account",name:"Full Name",email:"Email",
-  password:"Password",signup:"Sign Up",login:"Login",
-  logout:"Logout",request:"Submit a Help Request",
-  title:"Request Title",description:"Describe your request",
-  country:"Country",city:"City",submit:"Submit Request",
-  categories:"Help Categories",
-  items:["Food","Education","Healthcare","Visa","Clothing","Volunteering"],
-  need:"Please complete the required fields.",
-  success:"Account created. Check your email if confirmation is required.",
-  logged:"Login successful.",
-  saved:"Your help request has been submitted.",
-  loading:"Please wait...",
-  signed:"You are logged in: ",
-  error:"Error: "
- }
+ps:{
+welcome:"د مرستې پل — وړیا مرسته د ټولو لپاره",
+auth:"نوی حساب جوړ کړئ",name:"بشپړ نوم",email:"ایمیل",
+password:"پاسورډ",signup:"حساب جوړول",login:"ننوتل",
+logout:"وتل",request:"د مرستې غوښتنه ثبت کړئ",
+title:"د غوښتنې سرلیک",description:"خپله غوښتنه تشریح کړئ",
+country:"هېواد",city:"ښار",submit:"غوښتنه ثبتول",
+categories:"د مرستې برخې",
+requests:"د خلکو د مرستې غوښتنې",refresh:"بیا تازه کول",
+items:["خواړه","زده کړې","روغتیا","ویزه","جامې","رضاکارانه مرسته"],
+need:"مهرباني وکړئ اړین معلومات بشپړ کړئ.",
+success:"حساب جوړ شو. خپل ایمیل وګورئ.",
+logged:"په بریالیتوب سره ننوتل.",
+saved:"ستاسو د مرستې غوښتنه ثبت شوه.",
+loading:"مهرباني وکړئ انتظار وکړئ...",
+signed:"تاسو ننوتلي یاست: ",
+error:"ستونزه: ",
+empty:"اوسمهال غوښتنې نشته.",
+status:"حالت: ",cityLabel:"ښار: "
+},
+en:{
+welcome:"The Bridge of Help — Free Help for Everyone",
+auth:"Create a New Account",name:"Full Name",email:"Email",
+password:"Password",signup:"Sign Up",login:"Login",
+logout:"Logout",request:"Submit a Help Request",
+title:"Request Title",description:"Describe your request",
+country:"Country",city:"City",submit:"Submit Request",
+categories:"Help Categories",
+requests:"Community Help Requests",refresh:"Refresh",
+items:["Food","Education","Healthcare","Visa","Clothing","Volunteering"],
+need:"Please complete the required fields.",
+success:"Account created. Check your email if confirmation is required.",
+logged:"Login successful.",
+saved:"Your help request has been submitted.",
+loading:"Please wait...",
+signed:"You are logged in: ",
+error:"Error: ",
+empty:"No requests available.",
+status:"Status: ",cityLabel:"City: "
+}
 };
 
 function changeLang(l){
- lang=l;
- document.documentElement.lang=l;
- document.documentElement.dir=l==="ps"?"rtl":"ltr";
- const w=words[l];
- welcome.textContent=w.welcome;
- authTitle.textContent=w.auth;
- name.placeholder=w.name;
- email.placeholder=w.email;
- password.placeholder=w.password;
- signupBtn.textContent=w.signup;
- loginBtn.textContent=w.login;
- logoutBtn.textContent=w.logout;
- requestTitle.textContent=w.request;
- title.placeholder=w.title;
- description.placeholder=w.description;
- country.placeholder=w.country;
- city.placeholder=w.city;
- submitBtn.textContent=w.submit;
- categoriesTitle.textContent=w.categories;
- category.innerHTML=w.items.map((x,i)=>
- `<option value="${["Food","Education","Healthcare","Visa","Clothing","Volunteering"][i]}">${x}</option>`
- ).join("");
- categories.innerHTML=w.items.map(x=>`<p>${x}</p>`).join("");
+lang=l;
+document.documentElement.lang=l;
+document.documentElement.dir=l==="ps"?"rtl":"ltr";
+const w=words[l];
+
+$("welcome").textContent=w.welcome;
+$("authTitle").textContent=w.auth;
+$("name").placeholder=w.name;
+$("email").placeholder=w.email;
+$("password").placeholder=w.password;
+$("signupBtn").textContent=w.signup;
+$("loginBtn").textContent=w.login;
+$("logoutBtn").textContent=w.logout;
+$("requestTitle").textContent=w.request;
+$("title").placeholder=w.title;
+$("description").placeholder=w.description;
+$("country").placeholder=w.country;
+$("city").placeholder=w.city;
+$("submitBtn").textContent=w.submit;
+$("categoriesTitle").textContent=w.categories;
+$("requestsTitle").textContent=w.requests;
+$("refreshBtn").textContent=w.refresh;
+
+$("category").innerHTML=w.items.map((x,i)=>
+`<option value="${["Food","Education","Healthcare","Visa","Clothing","Volunteering"][i]}">${x}</option>`
+).join("");
+
+$("categories").replaceChildren();
+w.items.forEach(x=>{
+const p=document.createElement("p");
+p.textContent=x;
+$("categories").appendChild(p);
+});
 }
 
-function msg(t){message.textContent=t;}
+function msg(t){$("message").textContent=t;}
 
 async function signup(){
- const n=name.value.trim(),e=email.value.trim(),p=password.value;
- if(!n||!e||!p){msg(words[lang].need);return;}
- msg(words[lang].loading);
- const {error}=await db.auth.signUp({
-  email:e,password:p,options:{data:{full_name:n}}
- });
- if(error)msg(words[lang].error+error.message);
- else msg(words[lang].success);
+const n=$("name").value.trim();
+const e=$("email").value.trim();
+const p=$("password").value;
+if(!n||!e||!p){msg(words[lang].need);return;}
+msg(words[lang].loading);
+
+const {error}=await db.auth.signUp({
+email:e,password:p,options:{data:{full_name:n}}
+});
+if(error)msg(words[lang].error+error.message);
+else msg(words[lang].success);
 }
 
 async function login(){
- const e=email.value.trim(),p=password.value;
- if(!e||!p){msg(words[lang].need);return;}
- msg(words[lang].loading);
- const {error}=await db.auth.signInWithPassword({email:e,password:p});
- if(error)msg(words[lang].error+error.message);
- else msg(words[lang].logged);
- await updateUser();
+const e=$("email").value.trim();
+const p=$("password").value;
+if(!e||!p){msg(words[lang].need);return;}
+msg(words[lang].loading);
+
+const {error}=await db.auth.signInWithPassword({email:e,password:p});
+if(error)msg(words[lang].error+error.message);
+else{
+msg(words[lang].logged);
+await updateUser();
+}
 }
 
 async function logout(){
- const {error}=await db.auth.signOut();
- if(error)msg(words[lang].error+error.message);
- else msg(words[lang].logout);
- await updateUser();
+const {error}=await db.auth.signOut();
+if(error)msg(words[lang].error+error.message);
+else msg(words[lang].logout);
+await updateUser();
 }
 
 async function updateUser(){
- const {data}=await db.auth.getUser();
- const u=data.user;
- userStatus.textContent=u?words[lang].signed+u.email:"";
- requestSection.hidden=!u;
- logoutBtn.hidden=!u;
- signupBtn.hidden=!!u;
- loginBtn.hidden=!!u;
- name.hidden=!!u;
+const {data}=await db.auth.getUser();
+const u=data.user;
+
+$("userStatus").textContent=u?words[lang].signed+u.email:"";
+$("requestSection").hidden=!u;
+$("requestsSection").hidden=!u;
+$("logoutBtn").hidden=!u;
+$("signupBtn").hidden=!!u;
+$("loginBtn").hidden=!!u;
+$("name").hidden=!!u;
+
+if(u)await loadRequests();
+else $("publicRequests").textContent="";
 }
 
 async function submitRequest(){
- const {data}=await db.auth.getUser();
- const u=data.user;
- if(!u){requestMessage.textContent=words[lang].need;return;}
+const {data}=await db.auth.getUser();
+const u=data.user;
+if(!u){$("requestMessage").textContent=words[lang].need;return;}
 
- const t=title.value.trim();
- const d=description.value.trim();
- const c=country.value.trim();
- const cityName=city.value.trim();
- if(!t||!d||!c||!cityName){
-  requestMessage.textContent=words[lang].need;
-  return;
- }
+const t=$("title").value.trim();
+const d=$("description").value.trim();
+const c=$("country").value.trim();
+const cityName=$("city").value.trim();
 
- requestMessage.textContent=words[lang].loading;
-
- const chosenCategory=category.value;
- const {error}=await db.from("nb_posts").insert({
-  owner_id:u.id,
-  title:t,
-  post_type:"request",
-  status:"pending",
-  description:"Category: "+chosenCategory+"\n"+d,
-  country:c,
-  city:cityName
- });
-
- if(error){
-  requestMessage.textContent=words[lang].error+error.message;
- }else{
-  requestMessage.textContent=words[lang].saved;
-  title.value="";
-  description.value="";
-  country.value="";
-  city.value="";
- }
+if(!t||!d||!c||!cityName){
+$("requestMessage").textContent=words[lang].need;
+return;
 }
 
-db.auth.onAuthStateChange(()=>{updateUser();});
+$("requestMessage").textContent=words[lang].loading;
+
+const chosenCategory=$("category").value;
+const {error}=await db.from("nb_posts").insert({
+owner_id:u.id,
+title:t,
+post_type:"request",
+status:"pending",
+description:"Category: "+chosenCategory+"\n"+d,
+country:c,
+city:cityName
+});
+
+if(error){
+$("requestMessage").textContent=words[lang].error+error.message;
+}else{
+$("requestMessage").textContent=words[lang].saved;
+$("title").value="";
+$("description").value="";
+$("country").value="";
+$("city").value="";
+await loadRequests();
+}
+}
+
+async function loadRequests(){
+const box=$("publicRequests");
+box.textContent=words[lang].loading;
+
+const {data,error}=await db
+.from("nb_posts")
+.select("id,title,description,country,city,status,created_at")
+.order("created_at",{ascending:false})
+.limit(50);
+
+if(error){
+box.textContent=words[lang].error+error.message;
+return;
+}
+
+box.replaceChildren();
+
+if(!data||data.length===0){
+box.textContent=words[lang].empty;
+return;
+}
+
+data.forEach(post=>{
+const card=document.createElement("div");
+card.className="request-card";
+
+const heading=document.createElement("h3");
+heading.textContent=post.title||"";
+
+const desc=document.createElement("p");
+const raw=post.description||"";
+desc.textContent=raw.replace(/^Category:\s*[^\n]*\n?/,"");
+
+const location=document.createElement("p");
+location.textContent=words[lang].cityLabel+(post.city||"")+
+(post.country?" — "+post.country:"");
+
+const status=document.createElement("small");
+status.textContent=words[lang].status+post.status;
+
+card.append(heading,desc,location,status);
+box.appendChild(card);
+});
+}
+
+db.auth.onAuthStateChange(()=>{
+setTimeout(()=>updateUser(),0);
+});
+
 changeLang("ps");
 updateUser();
 </script>
