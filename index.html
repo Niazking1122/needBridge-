@@ -3,94 +3,255 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NeedBridge</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>NeedBridge - د مرستې پل</title>
 <style>
-body{font-family:Arial;background:#f3f8f6;margin:0;color:#173b39}
-header{background:#087e72;color:white;padding:20px;text-align:center}
-main{max-width:600px;margin:25px auto;padding:15px}
-section{background:white;padding:22px;border-radius:14px;margin:15px 0}
-input{width:100%;box-sizing:border-box;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:8px}
-button{padding:12px 18px;background:#087e72;color:white;border:0;border-radius:8px;margin:5px;cursor:pointer}
-.card{display:inline-block;background:white;padding:20px;margin:6px;border-radius:10px}
-#message{padding:12px;overflow-wrap:anywhere}
+body {
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+  padding: 20px;
+  color: #172554;
+}
+header {
+  text-align: center;
+  background: #075985;
+  color: white;
+  padding: 22px;
+  border-radius: 14px;
+}
+button {
+  background: #0284c7;
+  color: white;
+  border: 0;
+  padding: 12px 18px;
+  border-radius: 8px;
+  margin: 5px;
+  cursor: pointer;
+}
+input {
+  display: block;
+  width: 90%;
+  padding: 13px;
+  margin: 10px auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+section {
+  background: white;
+  padding: 18px;
+  margin: 18px auto;
+  border-radius: 12px;
+  max-width: 450px;
+  text-align: center;
+}
+.category {
+  background: #e0f2fe;
+  padding: 15px;
+  margin: 8px;
+  border-radius: 8px;
+}
+#message { color: #075985; }
 </style>
 </head>
 <body>
+
 <header>
-<h1>🌉 NeedBridge</h1>
-<p>وړیا مرسته د ټولو لپاره</p>
+<h1>NeedBridge</h1>
+<p id="welcome">د مرستې پل — وړیا مرسته د ټولو لپاره</p>
+<button onclick="changeLang('ps')">پښتو</button>
+<button onclick="changeLang('en')">English</button>
 </header>
-<main>
+
 <section>
-<h2>د مرستې برخې</h2>
-<div class="card">🍲 خواړه</div>
-<div class="card">📚 زده کړې</div>
-<div class="card">🏥 روغتیا</div>
-<div class="card">👕 جامې</div>
-<div class="card">🛂 ویزه</div>
-<div class="card">🤝 رضاکارانه مرسته</div>
+<h2 id="authTitle">نوی حساب جوړ کړئ</h2>
+
+<input id="name" placeholder="بشپړ نوم">
+<input id="email" type="email" placeholder="ایمیل">
+<input id="password" type="password" placeholder="پاسورډ">
+
+<button id="signupBtn" onclick="signup()">حساب جوړول</button>
+<button id="loginBtn" onclick="login()">ننوتل</button>
+<button id="logoutBtn" onclick="logout()" style="display:none">وتل</button>
+
+<p id="userStatus"></p>
+<p id="message"></p>
 </section>
 
 <section>
-<h2>حساب ته ننوتل / نوی حساب</h2>
-<input id="name" placeholder="بشپړ نوم (Full name)">
-<input id="email" type="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-<button onclick="signup()">نوی حساب جوړ کړه</button>
-<button onclick="login()">Login / ننوتل</button>
-<button onclick="logout()">Logout / وتل</button>
-<p id="message">مهرباني وکړئ خپل معلومات ولیکئ.</p>
-<p id="user"></p>
+<h2 id="categoriesTitle">د مرستې برخې</h2>
+<div id="categories"></div>
 </section>
-</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
+
 const db = window.supabase.createClient(
-'https://urozgfqxtbjmejyyocow.supabase.co',
-'sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T'
+  SUPABASE_URL,
+  SUPABASE_KEY
 );
 
-async function signup(){
-const name=document.getElementById('name').value.trim();
-const email=document.getElementById('email').value.trim();
-const password=document.getElementById('password').value;
-if(!name||!email||password.length<6){
-return show('نوم، ایمیل او لږ تر لږه ۶ توري پاسورډ ولیکئ.');
+let lang = "ps";
+
+const words = {
+ ps: {
+  welcome:"د مرستې پل — وړیا مرسته د ټولو لپاره",
+  title:"نوی حساب جوړ کړئ",
+  name:"بشپړ نوم",
+  email:"ایمیل",
+  password:"پاسورډ",
+  signup:"حساب جوړول",
+  login:"ننوتل",
+  logout:"وتل",
+  categories:"د مرستې برخې",
+  items:["خواړه","زده کړې","روغتیا","ویزه او غوښتنلیک","جامې","رضاکارانه مرسته"],
+  signed:"تاسو ننوتلي یاست:",
+  signedOut:"تاسو له حسابه وتلي یاست.",
+  need:"مهرباني وکړئ معلومات بشپړ کړئ.",
+  success:"حساب جوړ شو. که د ایمیل تایید غوښتل شوی وي، خپل ایمیل وګورئ.",
+  loginSuccess:"په بریالیتوب سره ننوتل.",
+  error:"ستونزه رامنځته شوه: ",
+  loading:"مهرباني وکړئ انتظار وکړئ..."
+ },
+ en: {
+  welcome:"The Bridge of Help — Free Help for Everyone",
+  title:"Create a New Account",
+  name:"Full Name",
+  email:"Email",
+  password:"Password",
+  signup:"Sign Up",
+  login:"Login",
+  logout:"Logout",
+  categories:"Help Categories",
+  items:["Food","Education","Healthcare","Visa & Applications","Clothing","Volunteering"],
+  signed:"You are logged in:",
+  signedOut:"You have logged out.",
+  need:"Please complete all required fields.",
+  success:"Account created. Check your email if confirmation is required.",
+  loginSuccess:"Login successful.",
+  error:"An error occurred: ",
+  loading:"Please wait..."
+ }
+};
+
+function changeLang(language) {
+ lang = language;
+ document.documentElement.lang = language;
+ document.documentElement.dir = language === "ps" ? "rtl" : "ltr";
+ const w = words[lang];
+
+ document.getElementById("welcome").textContent = w.welcome;
+ document.getElementById("authTitle").textContent = w.title;
+ document.getElementById("name").placeholder = w.name;
+ document.getElementById("email").placeholder = w.email;
+ document.getElementById("password").placeholder = w.password;
+ document.getElementById("signupBtn").textContent = w.signup;
+ document.getElementById("loginBtn").textContent = w.login;
+ document.getElementById("logoutBtn").textContent = w.logout;
+ document.getElementById("categoriesTitle").textContent = w.categories;
+
+ document.getElementById("categories").innerHTML =
+  w.items.map(item => `<div class="category">${item}</div>`).join("");
+
+ updateUser();
 }
-const {data,error}=await db.auth.signUp({
-email,password,
-options:{data:{full_name:name}}
+
+function showMessage(message) {
+ document.getElementById("message").textContent = message;
+}
+
+async function signup() {
+ const name = document.getElementById("name").value.trim();
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+ const w = words[lang];
+
+ if (!name || !email || !password) {
+  showMessage(w.need);
+  return;
+ }
+
+ showMessage(w.loading);
+
+ const { data, error } = await db.auth.signUp({
+  email,
+  password,
+  options: {
+   data: { full_name: name }
+  }
+ });
+
+ if (error) {
+  showMessage(w.error + error.message);
+ } else {
+  showMessage(w.success);
+  updateUser();
+ }
+}
+
+async function login() {
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+ const w = words[lang];
+
+ if (!email || !password) {
+  showMessage(w.need);
+  return;
+ }
+
+ showMessage(w.loading);
+
+ const { error } = await db.auth.signInWithPassword({
+  email,
+  password
+ });
+
+ if (error) {
+  showMessage(w.error + error.message);
+ } else {
+  showMessage(w.loginSuccess);
+  updateUser();
+ }
+}
+
+async function logout() {
+ const { error } = await db.auth.signOut();
+
+ if (error) {
+  showMessage(words[lang].error + error.message);
+ } else {
+  showMessage(words[lang].signedOut);
+  updateUser();
+ }
+}
+
+async function updateUser() {
+ const { data } = await db.auth.getUser();
+ const user = data.user;
+ const w = words[lang];
+
+ document.getElementById("userStatus").textContent =
+  user ? w.signed + " " + user.email : "";
+
+ document.getElementById("logoutBtn").style.display =
+  user ? "inline-block" : "none";
+
+ document.getElementById("signupBtn").style.display =
+  user ? "none" : "inline-block";
+
+ document.getElementById("loginBtn").style.display =
+  user ? "none" : "inline-block";
+
+ document.getElementById("name").style.display =
+  user ? "none" : "block";
+}
+
+db.auth.onAuthStateChange(() => {
+ updateUser();
 });
-if(error)return show(error.message);
-show(data.session?'حساب جوړ شو!':'حساب جوړ شو. خپل ایمیل تایید کړئ.');
-}
 
-async function login(){
-const email=document.getElementById('email').value.trim();
-const password=document.getElementById('password').value;
-const {data,error}=await db.auth.signInWithPassword({email,password});
-if(error)return show(error.message);
-show('په بریالیتوب داخل شوې!');
-}
-
-async function logout(){
-const {error}=await db.auth.signOut();
-if(error)return show(error.message);
-show('له حسابه ووتلې.');
-}
-
-function show(text){
-document.getElementById('message').textContent=text;
-}
-
-async function updateUser(){
-const {data}=await db.auth.getUser();
-document.getElementById('user').textContent=
-data.user?'Logged in: '+data.user.email:'';
-}
-
-db.auth.onAuthStateChange(()=>updateUser());
-updateUser();
+changeLang("ps");
 </script>
 </body>
 </html>
