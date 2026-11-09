@@ -3,34 +3,42 @@
 <html lang="ps" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NeedBridge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeedBridge - Help Platform</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{font-family:Arial;background:#f1f5f9;margin:0;color:#172033}
-header{background:#075985;color:white;text-align:center;padding:20px}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;color:#172033}
+header{background:#075985;color:white;text-align:center;padding:22px}
+header h1{margin:0;font-size:30px}
 main{max-width:850px;margin:20px auto;padding:12px}
 section,.post{background:white;padding:18px;margin:15px 0;border-radius:12px;box-shadow:0 2px 8px #0001}
 input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
-button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:white;margin:5px;cursor:pointer}
-.green{background:#15803d}.danger{background:#dc2626}.gray{background:#475569}
-.hidden{display:none}
+textarea{min-height:100px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:white;margin:5px;cursor:pointer;font-size:15px}
+.green{background:#15803d}
+.danger{background:#dc2626}
+.gray{background:#475569}
+.hidden{display:none!important}
 .post{border-right:5px solid #0284c7}
-#message{padding:12px}
+.status{font-weight:bold;color:#075985}
+#message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere}
+footer{text-align:center;padding:20px;color:#64748b}
 </style>
 </head>
 <body>
+
 <header>
 <h1>NeedBridge</h1>
-<p>د مرستې نړیوال وړیا پلیټفارم</p>
+<p id="subtitle">د مرستې نړیوال وړیا پلیټفارم</p>
 <button class="gray" onclick="toggleLanguage()">English / پښتو</button>
 </header>
+
 <main>
-<div id="message"></div>
+<div id="message" role="status"></div>
 
 <section>
-<h2>Login / Signup</h2>
+<h2 id="authHeading">Login / حساب ته ننوتل</h2>
 <input id="email" type="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 <button onclick="signup()">Sign Up</button>
@@ -51,21 +59,21 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 <option>Clothing</option>
 <option>Volunteering</option>
 </select>
-<textarea id="description" placeholder="د اړتیا معلومات"></textarea>
+<textarea id="description" placeholder="د خپلې اړتیا معلومات ولیکه"></textarea>
 <input id="country" placeholder="Country">
 <input id="city" placeholder="City">
 <button onclick="submitPost()">Submit Help Request</button>
 </section>
 
 <section>
-<h2>Help Categories</h2>
+<h2>Help Categories / د مرستې برخې</h2>
 <p>🍚 Food | 📚 Education | 🏥 Healthcare</p>
 <p>🛂 Visa | 👕 Clothing | 🤝 Volunteering</p>
 </section>
 
 <section>
-<h2>Help Requests</h2>
-<button onclick="loadRequests()">Refresh</button>
+<h2>Help Requests / د مرستې غوښتنې</h2>
+<button onclick="loadRequests()">Refresh Requests</button>
 <div id="posts">Loading...</div>
 </section>
 
@@ -78,224 +86,398 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 <section id="reportsPanel" class="hidden">
 <h2>Admin Reports Panel</h2>
 <button onclick="loadReports()">Refresh Reports</button>
-<div id="reportList">Loading...</div>
+<div id="reportList">Loading reports...</div>
 </section>
+
 </main>
 
+<footer>NeedBridge — Free Help for Everyone</footer>
+
 <script>
-const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
+/* SUPABASE CONNECTION */
+const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
 
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyb3pnZnF4dGJqbWVqeXlvY293Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMDgxOTcsImV4cCI6MjEwOTU4NDE5N30.3QxdIJP1EdKtUz2lvtzb1x-K1wOOVcRaMjdG5pYUnb0";
+/* د پروژې فعاله Publishable Key */
+const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
 
-const ADMIN_ID="0226963d-a946-498c-a977-f3eeac1c02f3";
+const ADMIN_ID = "0226963d-a946-498c-a977-f3eeac1c02f3";
 
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
-let currentUser=null;
-let isAdmin=false;
-let language="ps";
+let currentUser = null;
+let isAdmin = false;
+let language = "ps";
 
-function msg(t){
- document.getElementById("message").textContent=t;
+function msg(message){
+  document.getElementById("message").textContent = message;
 }
 
-function safe(v){
- return String(v||"").replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
+function safe(value){
+  return String(value || "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
 }
 
+/* SIGN UP */
 async function signup(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- if(!email||!password)return msg("Email او Password ولیکه");
- const {error}=await db.auth.signUp({email,password});
- msg(error?error.message:"حساب جوړ شو. خپل Email تایید کړه که غوښتنه یې وشي.");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    msg("Email او Password ولیکه");
+    return;
+  }
+
+  const {error} = await db.auth.signUp({
+    email:email,
+    password:password
+  });
+
+  if(error){
+    msg("Signup error: " + error.message);
+    return;
+  }
+
+  msg("حساب جوړ شو. که Email confirmation وغواړي، خپل Email تایید کړه.");
 }
 
+/* LOGIN */
 async function login(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- if(!email||!password)return msg("Email او Password ولیکه");
- const {error}=await db.auth.signInWithPassword({email,password});
- if(error)return msg(error.message);
- msg("Login successful");
- await updateUser();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    msg("Email او Password ولیکه");
+    return;
+  }
+
+  const {error} = await db.auth.signInWithPassword({
+    email:email,
+    password:password
+  });
+
+  if(error){
+    msg("Login error: " + error.message);
+    return;
+  }
+
+  msg("Login successful");
+  await updateUser();
 }
 
+/* LOGOUT */
 async function logout(){
- const {error}=await db.auth.signOut();
- if(error)return msg(error.message);
- currentUser=null;isAdmin=false;
- updateUI();msg("Logout successful");
+  const {error} = await db.auth.signOut();
+
+  if(error){
+    msg(error.message);
+    return;
+  }
+
+  currentUser = null;
+  isAdmin = false;
+  updateUI();
+  msg("Logout successful");
 }
 
+/* USER AND ADMIN */
 function updateUI(){
- document.getElementById("userStatus").textContent=
- currentUser?"Logged in: "+currentUser.email:"Not logged in";
- document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
- document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
+  document.getElementById("userStatus").textContent =
+    currentUser ? "Logged in: " + currentUser.email : "Not logged in";
+
+  document.getElementById("adminPanel").classList.toggle("hidden", !isAdmin);
+  document.getElementById("reportsPanel").classList.toggle("hidden", !isAdmin);
 }
 
 async function updateUser(){
- const {data,error}=await db.auth.getUser();
- if(error){msg(error.message);return}
- currentUser=data.user||null;
- isAdmin=false;
+  const {data,error} = await db.auth.getUser();
 
- if(currentUser){
-  const {data:a,error:e}=await db.from("nb_admins")
-   .select("user_id").eq("user_id",currentUser.id).maybeSingle();
-  if(!e&&a)isAdmin=true;
- }
- updateUI();
- await loadRequests();
- if(isAdmin)await loadReports();
+  if(error){
+    currentUser = null;
+    isAdmin = false;
+    updateUI();
+    msg("Authentication error: " + error.message);
+    return;
+  }
+
+  currentUser = data.user || null;
+  isAdmin = false;
+
+  if(currentUser){
+    const {data:adminData,error:adminError} = await db
+      .from("nb_admins")
+      .select("user_id")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+
+    if(!adminError && adminData){
+      isAdmin = true;
+    }
+  }
+
+  updateUI();
+  await loadRequests();
+
+  if(isAdmin){
+    await loadReports();
+  }
 }
 
+/* SUBMIT HELP REQUEST */
 async function submitPost(){
- if(!currentUser)return msg("لومړی Login وکړه");
- const title=document.getElementById("postTitle").value.trim();
- const category=document.getElementById("category").value;
- const description=document.getElementById("description").value.trim();
- const country=document.getElementById("country").value.trim();
- const city=document.getElementById("city").value.trim();
+  if(!currentUser){
+    msg("لومړی Login وکړه");
+    return;
+  }
 
- if(!title||!category||!description)return msg("ټول ضروري معلومات ولیکه");
+  const title = document.getElementById("postTitle").value.trim();
+  const category = document.getElementById("category").value;
+  const description = document.getElementById("description").value.trim();
+  const country = document.getElementById("country").value.trim();
+  const city = document.getElementById("city").value.trim();
 
- const {error}=await db.from("nb_posts").insert({
-  owner_id:currentUser.id,
-  title,
-  post_type:"request",
-  status:"pending",
-  description:"Category: "+category+"\n"+description,
-  country,city
- });
+  if(!title || !category || !description){
+    msg("سرلیک، کټګوري او معلومات ولیکه");
+    return;
+  }
 
- if(error)return msg(error.message);
- msg("Your help request has been submitted.");
- document.getElementById("postTitle").value="";
- document.getElementById("description").value="";
- document.getElementById("country").value="";
- document.getElementById("city").value="";
- await loadRequests();
+  const {error} = await db.from("nb_posts").insert({
+    owner_id:currentUser.id,
+    title:title,
+    post_type:"request",
+    status:"pending",
+    description:"Category: " + category + "\n" + description,
+    country:country,
+    city:city
+  });
+
+  if(error){
+    msg("Request error: " + error.message);
+    return;
+  }
+
+  msg("Your help request has been submitted.");
+
+  document.getElementById("postTitle").value = "";
+  document.getElementById("description").value = "";
+  document.getElementById("country").value = "";
+  document.getElementById("city").value = "";
+
+  await loadRequests();
 }
 
+/* LOAD REQUESTS */
 async function loadRequests(){
- const posts=document.getElementById("posts");
- const admin=document.getElementById("adminPosts");
- posts.textContent="Loading...";
- const {data,error}=await db.from("nb_posts")
-  .select("id,owner_id,title,status,description,country,city,created_at")
-  .order("created_at",{ascending:false});
+  const posts = document.getElementById("posts");
+  const admin = document.getElementById("adminPosts");
 
- if(error){posts.textContent="Error: "+error.message;return}
- posts.innerHTML="";
- admin.innerHTML="";
- if(!data||!data.length){posts.textContent="No requests found";return}
+  posts.textContent = "Loading...";
+  admin.innerHTML = "";
 
- data.forEach(p=>{
-  const div=document.createElement("div");
-  div.className="post";
-  div.innerHTML="<h3>"+safe(p.title)+"</h3><p>"+safe(p.description)+"</p><p>"+safe(p.city)+" "+safe(p.country)+"</p><b>Status: "+safe(p.status)+"</b>";
+  const {data,error} = await db.from("nb_posts")
+    .select("id,owner_id,title,status,description,country,city,created_at")
+    .order("created_at", {ascending:false});
 
-  if(currentUser&&p.owner_id!==currentUser.id&&p.status==="approved"){
-   const b=document.createElement("button");
-   b.className="danger";b.textContent="Report";
-   b.onclick=()=>reportPost(p.id);
-   div.appendChild(b);
+  if(error){
+    posts.textContent = "Error: " + error.message;
+    return;
   }
-  posts.appendChild(div);
 
-  if(isAdmin&&p.status==="pending"){
-   const a=document.createElement("div");
-   a.className="post";
-   a.innerHTML="<h3>"+safe(p.title)+"</h3><p>"+safe(p.description)+"</p>";
+  posts.innerHTML = "";
 
-   const yes=document.createElement("button");
-   yes.className="green";yes.textContent="Approve";
-   yes.onclick=()=>changePostStatus(p.id,"approved");
-
-   const no=document.createElement("button");
-   no.className="danger";no.textContent="Reject";
-   no.onclick=()=>changePostStatus(p.id,"rejected");
-
-   a.append(yes,no);
-   admin.appendChild(a);
+  if(!data || data.length === 0){
+    posts.textContent = "No requests found.";
+    return;
   }
- });
+
+  data.forEach(post => {
+    const div = document.createElement("div");
+    div.className = "post";
+
+    div.innerHTML =
+      "<h3>" + safe(post.title) + "</h3>" +
+      "<p>" + safe(post.description) + "</p>" +
+      "<p>" + safe(post.city) + " " + safe(post.country) + "</p>" +
+      "<p class='status'>Status: " + safe(post.status) + "</p>";
+
+    if(currentUser && post.owner_id !== currentUser.id &&
+       post.status === "approved"){
+
+      const reportButton = document.createElement("button");
+      reportButton.className = "danger";
+      reportButton.textContent = "Report";
+      reportButton.onclick = () => reportPost(post.id);
+      div.appendChild(reportButton);
+    }
+
+    posts.appendChild(div);
+
+    if(isAdmin && post.status === "pending"){
+      const adminDiv = document.createElement("div");
+      adminDiv.className = "post";
+
+      adminDiv.innerHTML =
+        "<h3>" + safe(post.title) + "</h3>" +
+        "<p>" + safe(post.description) + "</p>";
+
+      const approveButton = document.createElement("button");
+      approveButton.className = "green";
+      approveButton.textContent = "Approve";
+      approveButton.onclick = () => changePostStatus(post.id, "approved");
+
+      const rejectButton = document.createElement("button");
+      rejectButton.className = "danger";
+      rejectButton.textContent = "Reject";
+      rejectButton.onclick = () => changePostStatus(post.id, "rejected");
+
+      adminDiv.append(approveButton, rejectButton);
+      admin.appendChild(adminDiv);
+    }
+  });
 }
 
+/* APPROVE AND REJECT */
 async function changePostStatus(id,status){
- if(!isAdmin)return msg("Admin access required");
- const {error}=await db.from("nb_posts").update({status})
-  .eq("id",id);
- if(error)return msg("Update error: "+error.message);
- msg("Status changed: "+status);
- await loadRequests();
-}
-
-async function reportPost(id){
- if(!currentUser)return msg("لومړی Login وکړه");
- const reason=prompt("د راپور دلیل ولیکه:");
- if(!reason||!reason.trim())return;
-
- const {error}=await db.from("nb_reports").insert({
-  reporter_id:currentUser.id,
-  post_id:id,
-  reason:reason.trim()
- });
- if(error)return msg("Report error: "+error.message);
- msg("Report submitted.");
-}
-
-async function loadReports(){
- if(!isAdmin)return;
- const box=document.getElementById("reportList");
- box.textContent="Loading reports...";
-
- const {data,error}=await db.from("nb_reports")
-  .select("id,post_id,reporter_id,reason,status,created_at")
-  .order("created_at",{ascending:false});
-
- if(error){box.textContent="Reports error: "+error.message;return}
- box.innerHTML="";
- if(!data||!data.length){box.textContent="No reports found.";return}
-
- data.forEach(r=>{
-  const div=document.createElement("div");
-  div.className="post";
-  div.innerHTML="<h3>Report</h3><p>Post ID: "+safe(r.post_id)+"</p><p>Reason: "+safe(r.reason)+"</p><p>Reporter: "+safe(r.reporter_id)+"</p><p>Status: "+safe(r.status)+"</p><p>Date: "+safe(r.created_at)+"</p>";
-
-  if(r.status!=="reviewed"){
-   const b=document.createElement("button");
-   b.className="green";
-   b.textContent="Mark Reviewed";
-   b.onclick=()=>markReviewed(r.id);
-   div.appendChild(b);
+  if(!isAdmin){
+    msg("Admin access required");
+    return;
   }
-  box.appendChild(div);
- });
+
+  const {error} = await db.from("nb_posts")
+    .update({status:status})
+    .eq("id",id);
+
+  if(error){
+    msg("Update error: " + error.message);
+    return;
+  }
+
+  msg("Status changed: " + status);
+  await loadRequests();
 }
 
-async function markReviewed(id){
- if(!isAdmin)return msg("Admin access required");
- const {error}=await db.from("nb_reports")
-  .update({status:"reviewed"}).eq("id",id);
- if(error)return msg("Review error: "+error.message);
- msg("Report marked as reviewed.");
- await loadReports();
+/* REPORT */
+async function reportPost(postId){
+  if(!currentUser){
+    msg("لومړی Login وکړه");
+    return;
+  }
+
+  const reason = prompt("د راپور دلیل ولیکه:");
+
+  if(!reason || !reason.trim()){
+    return;
+  }
+
+  const {error} = await db.from("nb_reports").insert({
+    reporter_id:currentUser.id,
+    post_id:postId,
+    reason:reason.trim()
+  });
+
+  if(error){
+    msg("Report error: " + error.message);
+    return;
+  }
+
+  msg("Report submitted.");
 }
 
+/* ADMIN REPORTS */
+async function loadReports(){
+  if(!isAdmin){
+    return;
+  }
+
+  const box = document.getElementById("reportList");
+  box.textContent = "Loading reports...";
+
+  const {data,error} = await db.from("nb_reports")
+    .select("id,post_id,reporter_id,reason,status,created_at")
+    .order("created_at", {ascending:false});
+
+  if(error){
+    box.textContent = "Reports error: " + error.message;
+    return;
+  }
+
+  box.innerHTML = "";
+
+  if(!data || data.length === 0){
+    box.textContent = "No reports found.";
+    return;
+  }
+
+  data.forEach(report => {
+    const div = document.createElement("div");
+    div.className = "post";
+
+    div.innerHTML =
+      "<h3>Report</h3>" +
+      "<p>Post ID: " + safe(report.post_id) + "</p>" +
+      "<p>Reason: " + safe(report.reason) + "</p>" +
+      "<p>Reporter: " + safe(report.reporter_id) + "</p>" +
+      "<p>Status: " + safe(report.status) + "</p>" +
+      "<p>Date: " + safe(report.created_at) + "</p>";
+
+    if(report.status !== "reviewed"){
+      const button = document.createElement("button");
+      button.className = "green";
+      button.textContent = "Mark Reviewed";
+      button.onclick = () => markReviewed(report.id);
+      div.appendChild(button);
+    }
+
+    box.appendChild(div);
+  });
+}
+
+/* MARK REPORT REVIEWED */
+async function markReviewed(reportId){
+  if(!isAdmin){
+    msg("Admin access required");
+    return;
+  }
+
+  const {error} = await db.from("nb_reports")
+    .update({status:"reviewed"})
+    .eq("id",reportId);
+
+  if(error){
+    msg("Review error: " + error.message);
+    return;
+  }
+
+  msg("Report marked as reviewed.");
+  await loadReports();
+}
+
+/* LANGUAGE */
 function toggleLanguage(){
- language=language==="ps"?"en":"ps";
- document.documentElement.lang=language;
- document.documentElement.dir=language==="ps"?"rtl":"ltr";
- msg(language==="ps"?"پښتو ژبه":"English language");
+  language = language === "ps" ? "en" : "ps";
+  document.documentElement.lang = language;
+  document.documentElement.dir = language === "ps" ? "rtl" : "ltr";
+
+  document.getElementById("subtitle").textContent =
+    language === "ps"
+      ? "د مرستې نړیوال وړیا پلیټفارم"
+      : "Free Global Help Platform";
+
+  msg(language === "ps" ? "پښتو ژبه" : "English language");
 }
 
-db.auth.onAuthStateChange(()=>{
- setTimeout(()=>updateUser(),0);
+/* AUTH SESSION */
+db.auth.onAuthStateChange(() => {
+  setTimeout(() => {
+    updateUser();
+  }, 0);
 });
 
 updateUser();
