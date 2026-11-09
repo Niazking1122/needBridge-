@@ -11,8 +11,12 @@ header,section{background:white;padding:18px;margin:15px auto;border-radius:12px
 header{background:#075985;color:white}
 input,textarea,select{box-sizing:border-box;width:95%;padding:12px;margin:8px;border:1px solid #ccc;border-radius:8px}
 button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8px;margin:5px;cursor:pointer}
+button:disabled{opacity:.5}
+.approve{background:#15803d}
+.reject{background:#dc2626}
 .request-card{background:#f1f5f9;padding:12px;margin:10px 0;border-radius:8px;text-align:start}
 #message,#requestMessage{color:#075985}
+#adminStatus{color:#15803d;font-weight:bold}
 </style>
 </head>
 <body>
@@ -33,13 +37,13 @@ button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8
 <button id="loginBtn" onclick="login()">ننوتل</button>
 <button id="logoutBtn" onclick="logout()" hidden>وتل</button>
 <p id="userStatus"></p>
+<p id="adminStatus"></p>
 <p id="message"></p>
 </section>
 
 <section id="requestSection" hidden>
 <h2 id="requestTitle">د مرستې غوښتنه ثبت کړئ</h2>
 <input id="title" placeholder="د غوښتنې سرلیک">
-
 <select id="category">
 <option value="Food">خواړه</option>
 <option value="Education">زده کړې</option>
@@ -48,7 +52,6 @@ button{background:#0284c7;color:white;border:0;padding:12px 18px;border-radius:8
 <option value="Clothing">جامې</option>
 <option value="Volunteering">رضاکارانه مرسته</option>
 </select>
-
 <textarea id="description" placeholder="خپله غوښتنه تشریح کړئ"></textarea>
 <input id="country" placeholder="هېواد">
 <input id="city" placeholder="ښار">
@@ -76,6 +79,8 @@ const db = window.supabase.createClient(
 
 const $ = id => document.getElementById(id);
 let lang = "ps";
+let currentUser = null;
+let isAdmin = false;
 
 const words = {
 ps:{
@@ -96,7 +101,15 @@ loading:"مهرباني وکړئ انتظار وکړئ...",
 signed:"تاسو ننوتلي یاست: ",
 error:"ستونزه: ",
 empty:"اوسمهال غوښتنې نشته.",
-status:"حالت: ",cityLabel:"ښار: "
+status:"حالت: ",cityLabel:"ښار: ",
+admin:"تاسو Admin یاست.",
+approve:"تایید",reject:"رد",
+approved:"غوښتنه تایید شوه.",
+rejected:"غوښتنه رد شوه.",
+pending:"د تایید په تمه",
+approvedStatus:"تایید شوې",
+rejectedStatus:"رد شوې",
+notAdmin:""
 },
 en:{
 welcome:"The Bridge of Help — Free Help for Everyone",
@@ -116,7 +129,15 @@ loading:"Please wait...",
 signed:"You are logged in: ",
 error:"Error: ",
 empty:"No requests available.",
-status:"Status: ",cityLabel:"City: "
+status:"Status: ",cityLabel:"City: ",
+admin:"You are an Admin.",
+approve:"Approve",reject:"Reject",
+approved:"Request approved.",
+rejected:"Request rejected.",
+pending:"Pending",
+approvedStatus:"Approved",
+rejectedStatus:"Rejected",
+notAdmin:""
 }
 };
 
@@ -154,6 +175,8 @@ const p=document.createElement("p");
 p.textContent=x;
 $("categories").appendChild(p);
 });
+
+$("adminStatus").textContent=isAdmin?w.admin:"";
 }
 
 function msg(t){$("message").textContent=t;}
@@ -193,26 +216,49 @@ else msg(words[lang].logout);
 await updateUser();
 }
 
+async function checkAdmin(){
+isAdmin=false;
+if(!currentUser)return;
+
+const {data,error}=await db
+.from("nb_admins")
+.select("user_id")
+.eq("user_id",currentUser.id)
+.maybeSingle();
+
+if(error){
+console.error("Admin check:",error.message);
+return;
+}
+isAdmin=!!data;
+}
+
 async function updateUser(){
 const {data}=await db.auth.getUser();
-const u=data.user;
+currentUser=data.user||null;
 
-$("userStatus").textContent=u?words[lang].signed+u.email:"";
-$("requestSection").hidden=!u;
-$("requestsSection").hidden=!u;
-$("logoutBtn").hidden=!u;
-$("signupBtn").hidden=!!u;
-$("loginBtn").hidden=!!u;
-$("name").hidden=!!u;
+$("userStatus").textContent=currentUser?
+words[lang].signed+currentUser.email:"";
 
-if(u)await loadRequests();
+$("requestSection").hidden=!currentUser;
+$("requestsSection").hidden=!currentUser;
+$("logoutBtn").hidden=!currentUser;
+$("signupBtn").hidden=!!currentUser;
+$("loginBtn").hidden=!!currentUser;
+$("name").hidden=!!currentUser;
+
+await checkAdmin();
+$("adminStatus").textContent=isAdmin?words[lang].admin:"";
+
+if(currentUser)await loadRequests();
 else $("publicRequests").textContent="";
 }
 
 async function submitRequest(){
-const {data}=await db.auth.getUser();
-const u=data.user;
-if(!u){$("requestMessage").textContent=words[lang].need;return;}
+if(!currentUser){
+$("requestMessage").textContent=words[lang].need;
+return;
+}
 
 const t=$("title").value.trim();
 const d=$("description").value.trim();
@@ -228,7 +274,7 @@ $("requestMessage").textContent=words[lang].loading;
 
 const chosenCategory=$("category").value;
 const {error}=await db.from("nb_posts").insert({
-owner_id:u.id,
+owner_id:currentUser.id,
 title:t,
 post_type:"request",
 status:"pending",
@@ -249,7 +295,45 @@ await loadRequests();
 }
 }
 
+function statusText(status){
+const w=words[lang];
+if(status==="pending")return w.pending;
+if(status==="approved")return w.approvedStatus;
+if(status==="rejected")return w.rejectedStatus;
+return status||"";
+}
+
+async function reviewRequest(postId,newStatus){
+if(!isAdmin){
+alert("Admin access required");
+return;
+}
+
+const w=words[lang];
+const message=newStatus==="approved"?w.approved:w.rejected;
+if(!confirm(message+"?"))return;
+
+const {error}=await db
+.from("nb_posts")
+.update({
+status:newStatus,
+reviewed_at:new Date().toISOString(),
+reviewed_by:currentUser.id
+})
+.eq("id",postId);
+
+if(error){
+alert(w.error+error.message);
+return;
+}
+
+alert(message);
+await loadRequests();
+}
+
 async function loadRequests(){
+if(!currentUser)return;
+
 const box=$("publicRequests");
 box.textContent=words[lang].loading;
 
@@ -286,10 +370,25 @@ const location=document.createElement("p");
 location.textContent=words[lang].cityLabel+(post.city||"")+
 (post.country?" — "+post.country:"");
 
-const status=document.createElement("small");
-status.textContent=words[lang].status+post.status;
+const status=document.createElement("p");
+status.textContent=words[lang].status+statusText(post.status);
 
 card.append(heading,desc,location,status);
+
+if(isAdmin&&post.status==="pending"){
+const approveBtn=document.createElement("button");
+approveBtn.className="approve";
+approveBtn.textContent=words[lang].approve;
+approveBtn.onclick=()=>reviewRequest(post.id,"approved");
+
+const rejectBtn=document.createElement("button");
+rejectBtn.className="reject";
+rejectBtn.textContent=words[lang].reject;
+rejectBtn.onclick=()=>reviewRequest(post.id,"rejected");
+
+card.append(approveBtn,rejectBtn);
+}
+
 box.appendChild(card);
 });
 }
