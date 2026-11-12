@@ -6,13 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NeedBridge - Free Help Platform</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;color:#172033}
 header{background:#075985;color:white;text-align:center;padding:22px}
 header h1{margin:0;font-size:30px}
-main{max-width:850px;margin:20px auto;padding:12px}
+main{max-width:900px;margin:20px auto;padding:12px}
 section,.post{background:white;padding:18px;margin:15px 0;border-radius:12px;box-shadow:0 2px 8px #0001}
 input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
 textarea{min-height:100px}
@@ -29,12 +28,9 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .stat h3{font-size:14px}
 .stat strong{font-size:28px;color:#075985}
 footer{text-align:center;padding:20px;color:#64748b}
-@media(max-width:600px){
-.stats{grid-template-columns:repeat(2,1fr)}
-}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -43,7 +39,6 @@ footer{text-align:center;padding:20px;color:#64748b}
 </header>
 
 <main>
-
 <div id="message" role="status"></div>
 
 <section>
@@ -59,7 +54,6 @@ footer{text-align:center;padding:20px;color:#64748b}
 <section>
 <h2>Request Help</h2>
 <input id="postTitle" placeholder="Request Title">
-
 <select id="category">
 <option value="">Select a Category</option>
 <option>Food</option>
@@ -69,11 +63,9 @@ footer{text-align:center;padding:20px;color:#64748b}
 <option>Clothing</option>
 <option>Volunteering</option>
 </select>
-
 <textarea id="description" placeholder="Describe what help you need"></textarea>
 <input id="country" placeholder="Country">
 <input id="city" placeholder="City">
-
 <button onclick="submitPost()">Submit Help Request</button>
 </section>
 
@@ -93,192 +85,124 @@ footer{text-align:center;padding:20px;color:#64748b}
 <h2>Admin Dashboard</h2>
 <p>You are logged in as an Administrator.</p>
 
+<h3>Help Request Statistics</h3>
 <div class="stats">
-
-<div class="stat">
-<h3>Total Help Requests</h3>
-<strong id="totalRequests">0</strong>
+<div class="stat"><h3>Total Help Requests</h3><strong id="totalRequests">0</strong></div>
+<div class="stat"><h3>Pending Requests</h3><strong id="pendingRequests">0</strong></div>
+<div class="stat"><h3>Approved Requests</h3><strong id="approvedRequests">0</strong></div>
+<div class="stat"><h3>Rejected Requests</h3><strong id="rejectedRequests">0</strong></div>
 </div>
 
-<div class="stat">
-<h3>Pending Requests</h3>
-<strong id="pendingRequests">0</strong>
+<h3>User Statistics</h3>
+<div class="stats">
+<div class="stat"><h3>Total Users</h3><strong id="totalUsers">0</strong></div>
+<div class="stat"><h3>Total Categories</h3><strong id="totalCategories">0</strong></div>
+<div class="stat"><h3>Active Users (30 Days)</h3><strong id="activeUsers">0</strong></div>
 </div>
 
-<div class="stat">
-<h3>Approved Requests</h3>
-<strong id="approvedRequests">0</strong>
-</div>
-
-<div class="stat">
-<h3>Rejected Requests</h3>
-<strong id="rejectedRequests">0</strong>
-</div>
-
-</div>
-
-<button onclick="loadRequests()">Refresh Dashboard</button>
+<button onclick="loadRequests()">Refresh Requests</button>
+<button onclick="loadDashboardStats()">Refresh User Stats</button>
 <div id="adminPosts"></div>
 </section>
 
 <section id="reportsPanel" class="hidden">
 <h2>Admin Reports Dashboard</h2>
-
 <div class="stats">
-
-<div class="stat">
-<h3>Total Reports</h3>
-<strong id="totalReports">0</strong>
+<div class="stat"><h3>Total Reports</h3><strong id="totalReports">0</strong></div>
+<div class="stat"><h3>Pending Reports</h3><strong id="pendingReports">0</strong></div>
+<div class="stat"><h3>Reviewed Reports</h3><strong id="reviewedReports">0</strong></div>
 </div>
-
-<div class="stat">
-<h3>Pending Reports</h3>
-<strong id="pendingReports">0</strong>
-</div>
-
-<div class="stat">
-<h3>Reviewed Reports</h3>
-<strong id="reviewedReports">0</strong>
-</div>
-
-</div>
-
 <button onclick="loadReports()">Refresh Reports</button>
 <div id="reportList">Loading reports...</div>
 </section>
-
 </main>
 
 <footer>NeedBridge — Free Help for Everyone</footer>
 
 <script>
-const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
-const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
+const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
+const SUPABASE_KEY="sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let currentUser = null;
-let isAdmin = false;
+let currentUser=null;
+let isAdmin=false;
 
 function msg(message){
-  document.getElementById("message").textContent = message;
+  document.getElementById("message").textContent=message;
 }
 
 function safe(value){
-  return String(value || "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
+  return String(value||"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
 
 async function signup(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-
-  if(!email || !password){
-    msg("Please enter your email and password.");
-    return;
-  }
-
+  if(!email||!password){msg("Please enter your email and password.");return;}
   const {error}=await db.auth.signUp({email,password});
-
-  if(error){
-    msg("Signup error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Signup error: "+error.message);return;}
   msg("Account created. Please confirm your email if requested.");
 }
 
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-
-  if(!email || !password){
-    msg("Please enter your email and password.");
-    return;
-  }
-
+  if(!email||!password){msg("Please enter your email and password.");return;}
   const {error}=await db.auth.signInWithPassword({email,password});
-
-  if(error){
-    msg("Login error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Login error: "+error.message);return;}
   msg("Login successful.");
   await updateUser();
 }
 
 async function logout(){
   const {error}=await db.auth.signOut();
-
-  if(error){
-    msg(error.message);
-    return;
-  }
-
+  if(error){msg(error.message);return;}
   currentUser=null;
   isAdmin=false;
   updateUI();
-  msg("Logout successful.");
   await loadRequests();
+  msg("Logout successful.");
 }
 
 function updateUI(){
-  document.getElementById("userStatus").textContent =
-    currentUser ? "Logged in: "+currentUser.email : "Not logged in";
-
+  document.getElementById("userStatus").textContent=
+    currentUser?"Logged in: "+currentUser.email:"Not logged in";
   document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
 }
 
 async function updateUser(){
   const {data,error}=await db.auth.getUser();
-
   if(error){
-    currentUser=null;
-    isAdmin=false;
-    updateUI();
+    currentUser=null;isAdmin=false;updateUI();
     msg("Authentication error: "+error.message);
     return;
   }
 
-  currentUser=data.user || null;
+  currentUser=data.user||null;
   isAdmin=false;
 
   if(currentUser){
     const {data:adminData,error:adminError}=await db
-      .from("nb_admins")
-      .select("user_id")
-      .eq("user_id",currentUser.id)
-      .maybeSingle();
-
-    if(!adminError && adminData){
-      isAdmin=true;
-    }
+      .from("nb_admins").select("user_id")
+      .eq("user_id",currentUser.id).maybeSingle();
+    if(!adminError&&adminData)isAdmin=true;
   }
 
   updateUI();
-
   await loadRequests();
 
   if(isAdmin){
     await loadReports();
+    await loadDashboardStats();
   }
 }
 
 async function submitPost(){
-  if(!currentUser){
-    msg("Please login first.");
-    return;
-  }
+  if(!currentUser){msg("Please login first.");return;}
 
   const title=document.getElementById("postTitle").value.trim();
   const category=document.getElementById("category").value;
@@ -286,9 +210,8 @@ async function submitPost(){
   const country=document.getElementById("country").value.trim();
   const city=document.getElementById("city").value.trim();
 
-  if(!title || !category || !description){
-    msg("Please enter a title, category and description.");
-    return;
+  if(!title||!category||!description){
+    msg("Please enter a title, category and description.");return;
   }
 
   const {error}=await db.from("nb_posts").insert({
@@ -301,13 +224,9 @@ async function submitPost(){
     city:city
   });
 
-  if(error){
-    msg("Request error: "+error.message);
-    return;
-  }
+  if(error){msg("Request error: "+error.message);return;}
 
   msg("Your help request has been submitted.");
-
   document.getElementById("postTitle").value="";
   document.getElementById("description").value="";
   document.getElementById("country").value="";
@@ -320,7 +239,6 @@ async function submitPost(){
 async function loadRequests(){
   const posts=document.getElementById("posts");
   const admin=document.getElementById("adminPosts");
-
   posts.textContent="Loading requests...";
   admin.innerHTML="";
 
@@ -330,25 +248,17 @@ async function loadRequests(){
 
   if(error){
     posts.textContent="Error: "+error.message;
-    admin.textContent="Could not load admin requests.";
     return;
   }
 
-  const allPosts=data || [];
+  const allPosts=data||[];
+  const requests=allPosts.filter(p=>p.post_type==="request");
 
   if(isAdmin){
-    const requests=allPosts.filter(p=>p.post_type==="request");
-
     document.getElementById("totalRequests").textContent=requests.length;
-
-    document.getElementById("pendingRequests").textContent=
-      requests.filter(p=>p.status==="pending").length;
-
-    document.getElementById("approvedRequests").textContent=
-      requests.filter(p=>p.status==="approved").length;
-
-    document.getElementById("rejectedRequests").textContent=
-      requests.filter(p=>p.status==="rejected").length;
+    document.getElementById("pendingRequests").textContent=requests.filter(p=>p.status==="pending").length;
+    document.getElementById("approvedRequests").textContent=requests.filter(p=>p.status==="approved").length;
+    document.getElementById("rejectedRequests").textContent=requests.filter(p=>p.status==="rejected").length;
   }
 
   posts.innerHTML="";
@@ -361,31 +271,25 @@ async function loadRequests(){
   allPosts.forEach(post=>{
     const div=document.createElement("div");
     div.className="post";
-
-    div.innerHTML=
-      "<h3>"+safe(post.title)+"</h3>"+
+    div.innerHTML="<h3>"+safe(post.title)+"</h3>"+
       "<p>"+safe(post.description)+"</p>"+
       "<p>"+safe(post.city)+" "+safe(post.country)+"</p>"+
       "<p class='status'>Status: "+safe(post.status)+"</p>";
 
-    if(currentUser && post.owner_id!==currentUser.id && post.status==="approved"){
+    if(currentUser&&post.owner_id!==currentUser.id&&post.status==="approved"){
       const reportButton=document.createElement("button");
       reportButton.className="danger";
       reportButton.textContent="Report";
       reportButton.onclick=()=>reportPost(post.id);
       div.appendChild(reportButton);
     }
-
     posts.appendChild(div);
 
-    if(isAdmin && post.post_type==="request" && post.status==="pending"){
+    if(isAdmin&&post.post_type==="request"&&post.status==="pending"){
       const adminDiv=document.createElement("div");
       adminDiv.className="post";
-
-      adminDiv.innerHTML=
-        "<h3>"+safe(post.title)+"</h3>"+
-        "<p>"+safe(post.description)+"</p>"+
-        "<p>"+safe(post.city)+" "+safe(post.country)+"</p>";
+      adminDiv.innerHTML="<h3>"+safe(post.title)+"</h3>"+
+        "<p>"+safe(post.description)+"</p>";
 
       const approveButton=document.createElement("button");
       approveButton.className="green";
@@ -404,35 +308,38 @@ async function loadRequests(){
 }
 
 async function changePostStatus(id,status){
-  if(!isAdmin){
-    msg("Administrator access required.");
-    return;
-  }
-
-  const {error}=await db.from("nb_posts")
-    .update({status:status})
-    .eq("id",id);
-
-  if(error){
-    msg("Update error: "+error.message);
-    return;
-  }
-
+  if(!isAdmin){msg("Administrator access required.");return;}
+  const {error}=await db.from("nb_posts").update({status}).eq("id",id);
+  if(error){msg("Update error: "+error.message);return;}
   msg("Request status changed to: "+status);
   await loadRequests();
 }
 
+async function loadDashboardStats(){
+  if(!isAdmin)return;
+
+  const {data,error}=await db.rpc("nb_admin_dashboard_stats");
+
+  if(error){
+    msg("Dashboard stats error: "+error.message);
+    return;
+  }
+
+  if(!data||data.length===0){
+    msg("Admin statistics are unavailable.");
+    return;
+  }
+
+  const stats=data[0];
+  document.getElementById("totalUsers").textContent=stats.total_users;
+  document.getElementById("totalCategories").textContent=stats.total_categories;
+  document.getElementById("activeUsers").textContent=stats.active_users;
+}
+
 async function reportPost(postId){
-  if(!currentUser){
-    msg("Please login first.");
-    return;
-  }
-
+  if(!currentUser){msg("Please login first.");return;}
   const reason=prompt("Please enter the reason for this report:");
-
-  if(!reason || !reason.trim()){
-    return;
-  }
+  if(!reason||!reason.trim())return;
 
   const {error}=await db.from("nb_reports").insert({
     reporter_id:currentUser.id,
@@ -440,19 +347,12 @@ async function reportPost(postId){
     reason:reason.trim()
   });
 
-  if(error){
-    msg("Report error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Report error: "+error.message);return;}
   msg("Report submitted successfully.");
 }
 
 async function loadReports(){
-  if(!isAdmin){
-    return;
-  }
-
+  if(!isAdmin)return;
   const box=document.getElementById("reportList");
   box.textContent="Loading reports...";
 
@@ -460,34 +360,22 @@ async function loadReports(){
     .select("id,post_id,reporter_id,reason,status,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){
-    box.textContent="Reports error: "+error.message;
-    return;
-  }
+  if(error){box.textContent="Reports error: "+error.message;return;}
 
-  const reports=data || [];
-
+  const reports=data||[];
   document.getElementById("totalReports").textContent=reports.length;
-
   document.getElementById("pendingReports").textContent=
-    reports.filter(r=>!r.status || r.status==="pending").length;
-
+    reports.filter(r=>!r.status||r.status==="pending").length;
   document.getElementById("reviewedReports").textContent=
     reports.filter(r=>r.status==="reviewed").length;
 
   box.innerHTML="";
-
-  if(reports.length===0){
-    box.textContent="No reports found.";
-    return;
-  }
+  if(reports.length===0){box.textContent="No reports found.";return;}
 
   reports.forEach(report=>{
     const div=document.createElement("div");
     div.className="post";
-
-    div.innerHTML=
-      "<h3>Report</h3>"+
+    div.innerHTML="<h3>Report</h3>"+
       "<p>Post ID: "+safe(report.post_id)+"</p>"+
       "<p>Reason: "+safe(report.reason)+"</p>"+
       "<p>Reporter: "+safe(report.reporter_id)+"</p>"+
@@ -501,26 +389,15 @@ async function loadReports(){
       button.onclick=()=>markReviewed(report.id);
       div.appendChild(button);
     }
-
     box.appendChild(div);
   });
 }
 
 async function markReviewed(reportId){
-  if(!isAdmin){
-    msg("Administrator access required.");
-    return;
-  }
-
+  if(!isAdmin){msg("Administrator access required.");return;}
   const {error}=await db.from("nb_reports")
-    .update({status:"reviewed"})
-    .eq("id",reportId);
-
-  if(error){
-    msg("Review error: "+error.message);
-    return;
-  }
-
+    .update({status:"reviewed"}).eq("id",reportId);
+  if(error){msg("Review error: "+error.message);return;}
   msg("Report marked as reviewed.");
   await loadReports();
 }
@@ -530,7 +407,6 @@ db.auth.onAuthStateChange(()=>{
 });
 
 updateUser();
-
 </script>
 </body>
 </html>
