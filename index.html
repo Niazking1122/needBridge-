@@ -20,7 +20,7 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .danger{background:#dc2626}
 .gray{background:#475569}
 .hidden{display:none!important}
-.post{border-left:5px solid #0284c7}
+.post{border-left:5px solid #0284c7;overflow-wrap:anywhere}
 .status{font-weight:bold;color:#075985}
 #message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -102,7 +102,13 @@ footer{text-align:center;padding:20px;color:#64748b}
 
 <button onclick="loadRequests()">Refresh Requests</button>
 <button onclick="loadDashboardStats()">Refresh User Stats</button>
+
 <div id="adminPosts"></div>
+
+<h3>User Management</h3>
+<p>Manage registered platform users.</p>
+<button onclick="loadUsers()">Refresh Users</button>
+<div id="usersList">Loading users...</div>
 </section>
 
 <section id="reportsPanel" class="hidden">
@@ -141,28 +147,54 @@ function safe(value){
 async function signup(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-  if(!email||!password){msg("Please enter your email and password.");return;}
+
+  if(!email||!password){
+    msg("Please enter your email and password.");
+    return;
+  }
+
   const {error}=await db.auth.signUp({email,password});
-  if(error){msg("Signup error: "+error.message);return;}
+
+  if(error){
+    msg("Signup error: "+error.message);
+    return;
+  }
+
   msg("Account created. Please confirm your email if requested.");
 }
 
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-  if(!email||!password){msg("Please enter your email and password.");return;}
+
+  if(!email||!password){
+    msg("Please enter your email and password.");
+    return;
+  }
+
   const {error}=await db.auth.signInWithPassword({email,password});
-  if(error){msg("Login error: "+error.message);return;}
+
+  if(error){
+    msg("Login error: "+error.message);
+    return;
+  }
+
   msg("Login successful.");
   await updateUser();
 }
 
 async function logout(){
   const {error}=await db.auth.signOut();
-  if(error){msg(error.message);return;}
+
+  if(error){
+    msg(error.message);
+    return;
+  }
+
   currentUser=null;
   isAdmin=false;
   updateUI();
+  document.getElementById("posts").textContent="Loading requests...";
   await loadRequests();
   msg("Logout successful.");
 }
@@ -170,14 +202,18 @@ async function logout(){
 function updateUI(){
   document.getElementById("userStatus").textContent=
     currentUser?"Logged in: "+currentUser.email:"Not logged in";
+
   document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
 }
 
 async function updateUser(){
   const {data,error}=await db.auth.getUser();
+
   if(error){
-    currentUser=null;isAdmin=false;updateUI();
+    currentUser=null;
+    isAdmin=false;
+    updateUI();
     msg("Authentication error: "+error.message);
     return;
   }
@@ -187,9 +223,14 @@ async function updateUser(){
 
   if(currentUser){
     const {data:adminData,error:adminError}=await db
-      .from("nb_admins").select("user_id")
-      .eq("user_id",currentUser.id).maybeSingle();
-    if(!adminError&&adminData)isAdmin=true;
+      .from("nb_admins")
+      .select("user_id")
+      .eq("user_id",currentUser.id)
+      .maybeSingle();
+
+    if(!adminError&&adminData){
+      isAdmin=true;
+    }
   }
 
   updateUI();
@@ -198,11 +239,15 @@ async function updateUser(){
   if(isAdmin){
     await loadReports();
     await loadDashboardStats();
+    await loadUsers();
   }
 }
 
 async function submitPost(){
-  if(!currentUser){msg("Please login first.");return;}
+  if(!currentUser){
+    msg("Please login first.");
+    return;
+  }
 
   const title=document.getElementById("postTitle").value.trim();
   const category=document.getElementById("category").value;
@@ -211,7 +256,8 @@ async function submitPost(){
   const city=document.getElementById("city").value.trim();
 
   if(!title||!category||!description){
-    msg("Please enter a title, category and description.");return;
+    msg("Please enter a title, category and description.");
+    return;
   }
 
   const {error}=await db.from("nb_posts").insert({
@@ -224,9 +270,13 @@ async function submitPost(){
     city:city
   });
 
-  if(error){msg("Request error: "+error.message);return;}
+  if(error){
+    msg("Request error: "+error.message);
+    return;
+  }
 
   msg("Your help request has been submitted.");
+
   document.getElementById("postTitle").value="";
   document.getElementById("description").value="";
   document.getElementById("country").value="";
@@ -239,6 +289,7 @@ async function submitPost(){
 async function loadRequests(){
   const posts=document.getElementById("posts");
   const admin=document.getElementById("adminPosts");
+
   posts.textContent="Loading requests...";
   admin.innerHTML="";
 
@@ -256,9 +307,12 @@ async function loadRequests(){
 
   if(isAdmin){
     document.getElementById("totalRequests").textContent=requests.length;
-    document.getElementById("pendingRequests").textContent=requests.filter(p=>p.status==="pending").length;
-    document.getElementById("approvedRequests").textContent=requests.filter(p=>p.status==="approved").length;
-    document.getElementById("rejectedRequests").textContent=requests.filter(p=>p.status==="rejected").length;
+    document.getElementById("pendingRequests").textContent=
+      requests.filter(p=>p.status==="pending").length;
+    document.getElementById("approvedRequests").textContent=
+      requests.filter(p=>p.status==="approved").length;
+    document.getElementById("rejectedRequests").textContent=
+      requests.filter(p=>p.status==="rejected").length;
   }
 
   posts.innerHTML="";
@@ -271,6 +325,7 @@ async function loadRequests(){
   allPosts.forEach(post=>{
     const div=document.createElement("div");
     div.className="post";
+
     div.innerHTML="<h3>"+safe(post.title)+"</h3>"+
       "<p>"+safe(post.description)+"</p>"+
       "<p>"+safe(post.city)+" "+safe(post.country)+"</p>"+
@@ -283,11 +338,13 @@ async function loadRequests(){
       reportButton.onclick=()=>reportPost(post.id);
       div.appendChild(reportButton);
     }
+
     posts.appendChild(div);
 
     if(isAdmin&&post.post_type==="request"&&post.status==="pending"){
       const adminDiv=document.createElement("div");
       adminDiv.className="post";
+
       adminDiv.innerHTML="<h3>"+safe(post.title)+"</h3>"+
         "<p>"+safe(post.description)+"</p>";
 
@@ -308,9 +365,20 @@ async function loadRequests(){
 }
 
 async function changePostStatus(id,status){
-  if(!isAdmin){msg("Administrator access required.");return;}
-  const {error}=await db.from("nb_posts").update({status}).eq("id",id);
-  if(error){msg("Update error: "+error.message);return;}
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
+
+  const {error}=await db.from("nb_posts")
+    .update({status})
+    .eq("id",id);
+
+  if(error){
+    msg("Update error: "+error.message);
+    return;
+  }
+
   msg("Request status changed to: "+status);
   await loadRequests();
 }
@@ -331,14 +399,20 @@ async function loadDashboardStats(){
   }
 
   const stats=data[0];
+
   document.getElementById("totalUsers").textContent=stats.total_users;
   document.getElementById("totalCategories").textContent=stats.total_categories;
   document.getElementById("activeUsers").textContent=stats.active_users;
 }
 
 async function reportPost(postId){
-  if(!currentUser){msg("Please login first.");return;}
+  if(!currentUser){
+    msg("Please login first.");
+    return;
+  }
+
   const reason=prompt("Please enter the reason for this report:");
+
   if(!reason||!reason.trim())return;
 
   const {error}=await db.from("nb_reports").insert({
@@ -347,12 +421,17 @@ async function reportPost(postId){
     reason:reason.trim()
   });
 
-  if(error){msg("Report error: "+error.message);return;}
+  if(error){
+    msg("Report error: "+error.message);
+    return;
+  }
+
   msg("Report submitted successfully.");
 }
 
 async function loadReports(){
   if(!isAdmin)return;
+
   const box=document.getElementById("reportList");
   box.textContent="Loading reports...";
 
@@ -360,9 +439,13 @@ async function loadReports(){
     .select("id,post_id,reporter_id,reason,status,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){box.textContent="Reports error: "+error.message;return;}
+  if(error){
+    box.textContent="Reports error: "+error.message;
+    return;
+  }
 
   const reports=data||[];
+
   document.getElementById("totalReports").textContent=reports.length;
   document.getElementById("pendingReports").textContent=
     reports.filter(r=>!r.status||r.status==="pending").length;
@@ -370,11 +453,16 @@ async function loadReports(){
     reports.filter(r=>r.status==="reviewed").length;
 
   box.innerHTML="";
-  if(reports.length===0){box.textContent="No reports found.";return;}
+
+  if(reports.length===0){
+    box.textContent="No reports found.";
+    return;
+  }
 
   reports.forEach(report=>{
     const div=document.createElement("div");
     div.className="post";
+
     div.innerHTML="<h3>Report</h3>"+
       "<p>Post ID: "+safe(report.post_id)+"</p>"+
       "<p>Reason: "+safe(report.reason)+"</p>"+
@@ -389,17 +477,114 @@ async function loadReports(){
       button.onclick=()=>markReviewed(report.id);
       div.appendChild(button);
     }
+
     box.appendChild(div);
   });
 }
 
 async function markReviewed(reportId){
-  if(!isAdmin){msg("Administrator access required.");return;}
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
+
   const {error}=await db.from("nb_reports")
-    .update({status:"reviewed"}).eq("id",reportId);
-  if(error){msg("Review error: "+error.message);return;}
+    .update({status:"reviewed"})
+    .eq("id",reportId);
+
+  if(error){
+    msg("Review error: "+error.message);
+    return;
+  }
+
   msg("Report marked as reviewed.");
   await loadReports();
+}
+
+/* USER MANAGEMENT */
+
+async function loadUsers(){
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
+
+  const box=document.getElementById("usersList");
+  box.textContent="Loading users...";
+
+  const {data,error}=await db.functions.invoke("bright-action",{
+    body:{action:"list"}
+  });
+
+  if(error){
+    box.textContent="Users error: "+error.message;
+    return;
+  }
+
+  if(data?.error){
+    box.textContent="Users error: "+data.error;
+    return;
+  }
+
+  const users=data?.users||[];
+  box.innerHTML="";
+
+  if(users.length===0){
+    box.textContent="No users found.";
+    return;
+  }
+
+  users.forEach(user=>{
+    const div=document.createElement("div");
+    div.className="post";
+
+    div.innerHTML=
+      "<h3>"+safe(user.full_name||"No name")+"</h3>"+
+      "<p>Email: "+safe(user.email)+"</p>"+
+      "<p>Registered: "+safe(user.created_at?new Date(user.created_at).toLocaleString():"Unknown")+"</p>"+
+      "<p class='status'>Status: "+(user.is_blocked?"Blocked":"Active")+"</p>";
+
+    const button=document.createElement("button");
+    button.className=user.is_blocked?"green":"danger";
+    button.textContent=user.is_blocked?"Unblock User":"Block User";
+
+    button.onclick=()=>setUserBlocked(user.id,!user.is_blocked);
+
+    div.appendChild(button);
+    box.appendChild(div);
+  });
+}
+
+async function setUserBlocked(userId,blocked){
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
+
+  const action=blocked?"Block":"Unblock";
+
+  if(!confirm(action+" this user?"))return;
+
+  const {data,error}=await db.functions.invoke("bright-action",{
+    body:{
+      action:"set_block",
+      user_id:userId,
+      blocked:blocked
+    }
+  });
+
+  if(error){
+    msg("User update error: "+error.message);
+    return;
+  }
+
+  if(!data?.success){
+    msg(data?.error||"User update failed.");
+    return;
+  }
+
+  msg("User successfully "+(blocked?"blocked.":"unblocked."));
+  await loadUsers();
 }
 
 db.auth.onAuthStateChange(()=>{
