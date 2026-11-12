@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
-<html lang="ps" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NeedBridge - Help Platform</title>
+<title>NeedBridge - Free Help Platform</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
@@ -19,7 +20,7 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .danger{background:#dc2626}
 .gray{background:#475569}
 .hidden{display:none!important}
-.post{border-right:5px solid #0284c7}
+.post{border-left:5px solid #0284c7}
 .status{font-weight:bold;color:#075985}
 #message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -34,16 +35,15 @@ footer{text-align:center;padding:20px;color:#64748b}
 
 <header>
 <h1>NeedBridge</h1>
-<p id="subtitle">د مرستې نړیوال وړیا پلیټفارم</p>
-<button class="gray" onclick="toggleLanguage()">English / پښتو</button>
+<p>Free Global Help Platform</p>
 </header>
 
 <main>
 <div id="message" role="status"></div>
 
 <section>
-<h2 id="authHeading">Login / حساب ته ننوتل</h2>
-<input id="email" type="email" placeholder="Email">
+<h2>Login / Create Account</h2>
+<input id="email" type="email" placeholder="Email Address">
 <input id="password" type="password" placeholder="Password">
 <button onclick="signup()">Sign Up</button>
 <button onclick="login()">Login</button>
@@ -52,10 +52,10 @@ footer{text-align:center;padding:20px;color:#64748b}
 </section>
 
 <section>
-<h2>د مرستې غوښتنه</h2>
-<input id="postTitle" placeholder="د غوښتنې سرلیک">
+<h2>Request Help</h2>
+<input id="postTitle" placeholder="Request Title">
 <select id="category">
-<option value="">کټګوري انتخاب کړه</option>
+<option value="">Select a Category</option>
 <option>Food</option>
 <option>Education</option>
 <option>Healthcare</option>
@@ -63,46 +63,46 @@ footer{text-align:center;padding:20px;color:#64748b}
 <option>Clothing</option>
 <option>Volunteering</option>
 </select>
-<textarea id="description" placeholder="د خپلې اړتیا معلومات ولیکه"></textarea>
+<textarea id="description" placeholder="Describe what help you need"></textarea>
 <input id="country" placeholder="Country">
 <input id="city" placeholder="City">
 <button onclick="submitPost()">Submit Help Request</button>
 </section>
 
 <section>
-<h2>Help Categories / د مرستې برخې</h2>
+<h2>Help Categories</h2>
 <p>🍚 Food | 📚 Education | 🏥 Healthcare</p>
 <p>🛂 Visa | 👕 Clothing | 🤝 Volunteering</p>
 </section>
 
 <section>
-<h2>Help Requests / د مرستې غوښتنې</h2>
+<h2>Help Requests</h2>
 <button onclick="loadRequests()">Refresh Requests</button>
-<div id="posts">Loading...</div>
+<div id="posts">Loading requests...</div>
 </section>
 
 <section id="adminPanel" class="hidden">
-<h2>Admin Panel</h2>
-<p>You are an Admin</p>
+<h2>Admin Dashboard</h2>
+<p>You are logged in as an Administrator.</p>
 <div id="adminPosts"></div>
 </section>
 
 <section id="reportsPanel" class="hidden">
-<h2>Admin Reports Panel</h2>
+<h2>Admin Reports Dashboard</h2>
 
 <div class="stats">
-  <div class="stat">
-    <h3>Total Reports</h3>
-    <strong id="totalReports">0</strong>
-  </div>
-  <div class="stat">
-    <h3>Pending Reports</h3>
-    <strong id="pendingReports">0</strong>
-  </div>
-  <div class="stat">
-    <h3>Reviewed Reports</h3>
-    <strong id="reviewedReports">0</strong>
-  </div>
+<div class="stat">
+<h3>Total Reports</h3>
+<strong id="totalReports">0</strong>
+</div>
+<div class="stat">
+<h3>Pending Reports</h3>
+<strong id="pendingReports">0</strong>
+</div>
+<div class="stat">
+<h3>Reviewed Reports</h3>
+<strong id="reviewedReports">0</strong>
+</div>
 </div>
 
 <button onclick="loadReports()">Refresh Reports</button>
@@ -122,7 +122,6 @@ const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let currentUser = null;
 let isAdmin = false;
-let language = "ps";
 
 function msg(message){
   document.getElementById("message").textContent = message;
@@ -137,40 +136,67 @@ function safe(value){
 async function signup(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-  if(!email || !password){msg("Email او Password ولیکه");return;}
+
+  if(!email || !password){
+    msg("Please enter your email and password.");
+    return;
+  }
+
   const {error}=await db.auth.signUp({email,password});
-  if(error){msg("Signup error: "+error.message);return;}
-  msg("حساب جوړ شو. خپل Email تایید کړه که غوښتنه یې وشي.");
+
+  if(error){
+    msg("Signup error: "+error.message);
+    return;
+  }
+
+  msg("Account created. Please confirm your email if requested.");
 }
 
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-  if(!email || !password){msg("Email او Password ولیکه");return;}
+
+  if(!email || !password){
+    msg("Please enter your email and password.");
+    return;
+  }
+
   const {error}=await db.auth.signInWithPassword({email,password});
-  if(error){msg("Login error: "+error.message);return;}
-  msg("Login successful");
+
+  if(error){
+    msg("Login error: "+error.message);
+    return;
+  }
+
+  msg("Login successful.");
   await updateUser();
 }
 
 async function logout(){
   const {error}=await db.auth.signOut();
-  if(error){msg(error.message);return;}
+
+  if(error){
+    msg(error.message);
+    return;
+  }
+
   currentUser=null;
   isAdmin=false;
   updateUI();
-  msg("Logout successful");
+  msg("Logout successful.");
 }
 
 function updateUI(){
   document.getElementById("userStatus").textContent=
     currentUser ? "Logged in: "+currentUser.email : "Not logged in";
+
   document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
 }
 
 async function updateUser(){
   const {data,error}=await db.auth.getUser();
+
   if(error){
     currentUser=null;
     isAdmin=false;
@@ -189,17 +215,24 @@ async function updateUser(){
       .eq("user_id",currentUser.id)
       .maybeSingle();
 
-    if(!adminError && adminData){isAdmin=true;}
+    if(!adminError && adminData){
+      isAdmin=true;
+    }
   }
 
   updateUI();
   await loadRequests();
 
-  if(isAdmin){await loadReports();}
+  if(isAdmin){
+    await loadReports();
+  }
 }
 
 async function submitPost(){
-  if(!currentUser){msg("لومړی Login وکړه");return;}
+  if(!currentUser){
+    msg("Please login first.");
+    return;
+  }
 
   const title=document.getElementById("postTitle").value.trim();
   const category=document.getElementById("category").value;
@@ -208,7 +241,8 @@ async function submitPost(){
   const city=document.getElementById("city").value.trim();
 
   if(!title || !category || !description){
-    msg("سرلیک، کټګوري او معلومات ولیکه");return;
+    msg("Please enter a title, category and description.");
+    return;
   }
 
   const {error}=await db.from("nb_posts").insert({
@@ -221,29 +255,39 @@ async function submitPost(){
     city:city
   });
 
-  if(error){msg("Request error: "+error.message);return;}
+  if(error){
+    msg("Request error: "+error.message);
+    return;
+  }
 
   msg("Your help request has been submitted.");
+
   document.getElementById("postTitle").value="";
   document.getElementById("description").value="";
   document.getElementById("country").value="";
   document.getElementById("city").value="";
+
   await loadRequests();
 }
 
 async function loadRequests(){
   const posts=document.getElementById("posts");
   const admin=document.getElementById("adminPosts");
-  posts.textContent="Loading...";
+
+  posts.textContent="Loading requests...";
   admin.innerHTML="";
 
   const {data,error}=await db.from("nb_posts")
     .select("id,owner_id,title,status,description,country,city,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){posts.textContent="Error: "+error.message;return;}
+  if(error){
+    posts.textContent="Error: "+error.message;
+    return;
+  }
 
   posts.innerHTML="";
+
   if(!data || data.length===0){
     posts.textContent="No requests found.";
     return;
@@ -252,6 +296,7 @@ async function loadRequests(){
   data.forEach(post=>{
     const div=document.createElement("div");
     div.className="post";
+
     div.innerHTML=
       "<h3>"+safe(post.title)+"</h3>"+
       "<p>"+safe(post.description)+"</p>"+
@@ -271,7 +316,9 @@ async function loadRequests(){
     if(isAdmin && post.status==="pending"){
       const adminDiv=document.createElement("div");
       adminDiv.className="post";
-      adminDiv.innerHTML="<h3>"+safe(post.title)+"</h3><p>"+safe(post.description)+"</p>";
+      adminDiv.innerHTML=
+        "<h3>"+safe(post.title)+"</h3>"+
+        "<p>"+safe(post.description)+"</p>";
 
       const approveButton=document.createElement("button");
       approveButton.className="green";
@@ -290,17 +337,35 @@ async function loadRequests(){
 }
 
 async function changePostStatus(id,status){
-  if(!isAdmin){msg("Admin access required");return;}
-  const {error}=await db.from("nb_posts").update({status}).eq("id",id);
-  if(error){msg("Update error: "+error.message);return;}
-  msg("Status changed: "+status);
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
+
+  const {error}=await db.from("nb_posts")
+    .update({status:status})
+    .eq("id",id);
+
+  if(error){
+    msg("Update error: "+error.message);
+    return;
+  }
+
+  msg("Request status changed to: "+status);
   await loadRequests();
 }
 
 async function reportPost(postId){
-  if(!currentUser){msg("لومړی Login وکړه");return;}
-  const reason=prompt("د راپور دلیل ولیکه:");
-  if(!reason || !reason.trim()){return;}
+  if(!currentUser){
+    msg("Please login first.");
+    return;
+  }
+
+  const reason=prompt("Please enter the reason for this report:");
+
+  if(!reason || !reason.trim()){
+    return;
+  }
 
   const {error}=await db.from("nb_reports").insert({
     reporter_id:currentUser.id,
@@ -308,12 +373,18 @@ async function reportPost(postId){
     reason:reason.trim()
   });
 
-  if(error){msg("Report error: "+error.message);return;}
-  msg("Report submitted.");
+  if(error){
+    msg("Report error: "+error.message);
+    return;
+  }
+
+  msg("Report submitted successfully.");
 }
 
 async function loadReports(){
-  if(!isAdmin){return;}
+  if(!isAdmin){
+    return;
+  }
 
   const box=document.getElementById("reportList");
   box.textContent="Loading reports...";
@@ -329,17 +400,15 @@ async function loadReports(){
 
   const reports=data || [];
 
-  const total=reports.length;
-  const pending=reports.filter(r=>!r.status || r.status==="pending").length;
-  const reviewed=reports.filter(r=>r.status==="reviewed").length;
-
-  document.getElementById("totalReports").textContent=total;
-  document.getElementById("pendingReports").textContent=pending;
-  document.getElementById("reviewedReports").textContent=reviewed;
+  document.getElementById("totalReports").textContent=reports.length;
+  document.getElementById("pendingReports").textContent=
+    reports.filter(r=>!r.status || r.status==="pending").length;
+  document.getElementById("reviewedReports").textContent=
+    reports.filter(r=>r.status==="reviewed").length;
 
   box.innerHTML="";
 
-  if(total===0){
+  if(reports.length===0){
     box.textContent="No reports found.";
     return;
   }
@@ -347,6 +416,7 @@ async function loadReports(){
   reports.forEach(report=>{
     const div=document.createElement("div");
     div.className="post";
+
     div.innerHTML=
       "<h3>Report</h3>"+
       "<p>Post ID: "+safe(report.post_id)+"</p>"+
@@ -368,25 +438,22 @@ async function loadReports(){
 }
 
 async function markReviewed(reportId){
-  if(!isAdmin){msg("Admin access required");return;}
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
 
   const {error}=await db.from("nb_reports")
     .update({status:"reviewed"})
     .eq("id",reportId);
 
-  if(error){msg("Review error: "+error.message);return;}
+  if(error){
+    msg("Review error: "+error.message);
+    return;
+  }
 
   msg("Report marked as reviewed.");
   await loadReports();
-}
-
-function toggleLanguage(){
-  language=language==="ps"?"en":"ps";
-  document.documentElement.lang=language;
-  document.documentElement.dir=language==="ps"?"rtl":"ltr";
-  document.getElementById("subtitle").textContent=
-    language==="ps"?"د مرستې نړیوال وړیا پلیټفارم":"Free Global Help Platform";
-  msg(language==="ps"?"پښتو ژبه":"English language");
 }
 
 db.auth.onAuthStateChange(()=>{
