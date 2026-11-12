@@ -27,6 +27,7 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .stat{background:#e0f2fe;padding:15px;text-align:center;border-radius:10px}
 .stat h3{font-size:14px}
 .stat strong{font-size:28px;color:#075985}
+.profile-photo{width:125px;height:125px;border-radius:50%;object-fit:cover;border:3px solid #0284c7;display:block;margin:12px auto}
 footer{text-align:center;padding:20px;color:#64748b}
 @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -54,6 +55,14 @@ footer{text-align:center;padding:20px;color:#64748b}
 <section id="profilePanel" class="hidden">
 <h2>My Profile</h2>
 <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+
+<img id="profilePhoto" class="profile-photo hidden" alt="Profile Photo">
+
+<label for="photoFile">Choose Profile Photo</label>
+<input id="photoFile" type="file" accept="image/*">
+<button class="green" onclick="uploadProfilePhoto()">Upload Photo</button>
+
+<hr>
 <label for="profileName">Full Name</label>
 <input id="profileName" placeholder="Enter your full name">
 <button class="green" onclick="saveProfile()">Save Profile</button>
@@ -226,10 +235,11 @@ async function loadProfile(){
 
   document.getElementById("profileEmail").textContent=currentUser.email||"";
   const nameInput=document.getElementById("profileName");
+  const photo=document.getElementById("profilePhoto");
   nameInput.value="";
 
   const {data,error}=await db.from("nb_profiles")
-    .select("full_name")
+    .select("full_name, avatar_url")
     .eq("id",currentUser.id)
     .maybeSingle();
 
@@ -238,7 +248,16 @@ async function loadProfile(){
     return;
   }
 
-  if(data)nameInput.value=data.full_name||"";
+  if(data){
+    nameInput.value=data.full_name||"";
+    if(data.avatar_url){
+      photo.src=data.avatar_url;
+      photo.classList.remove("hidden");
+    }else{
+      photo.removeAttribute("src");
+      photo.classList.add("hidden");
+    }
+  }
 }
 
 async function saveProfile(){
@@ -270,6 +289,84 @@ async function saveProfile(){
   }
 
   msg("Your profile has been saved successfully.");
+}
+
+/* PROFILE PHOTO UPLOAD */
+
+async function uploadProfilePhoto(){
+  if(!currentUser){
+    msg("Please login first.");
+    return;
+  }
+
+  const input=document.getElementById("photoFile");
+  const file=input.files[0];
+
+  if(!file){
+    msg("Please choose a photo first.");
+    return;
+  }
+
+  if(!file.type.startsWith("image/")){
+    msg("Please select an image file.");
+    return;
+  }
+
+  if(file.size>5*1024*1024){
+    msg("Image must be smaller than 5 MB.");
+    return;
+  }
+
+  const extensions={
+    "image/jpeg":"jpg",
+    "image/png":"png",
+    "image/webp":"webp",
+    "image/gif":"gif"
+  };
+
+  const extension=extensions[file.type];
+  if(!extension){
+    msg("Please use JPG, PNG, WEBP or GIF.");
+    return;
+  }
+
+  msg("Uploading photo...");
+
+  const path=currentUser.id+"/"+Date.now()+"."+extension;
+
+  const {error:uploadError}=await db.storage
+    .from("profile-photos")
+    .upload(path,file,{
+      contentType:file.type,
+      upsert:false
+    });
+
+  if(uploadError){
+    msg("Photo upload error: "+uploadError.message);
+    return;
+  }
+
+  const {data:urlData}=db.storage
+    .from("profile-photos")
+    .getPublicUrl(path);
+
+  const publicUrl=urlData.publicUrl;
+
+  const {error:updateError}=await db.from("nb_profiles")
+    .update({avatar_url:publicUrl})
+    .eq("id",currentUser.id);
+
+  if(updateError){
+    msg("Photo uploaded but profile update failed: "+updateError.message);
+    return;
+  }
+
+  const photo=document.getElementById("profilePhoto");
+  photo.src=publicUrl;
+  photo.classList.remove("hidden");
+  input.value="";
+
+  msg("Profile photo uploaded successfully!");
 }
 
 async function submitPost(){
