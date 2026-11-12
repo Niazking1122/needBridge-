@@ -16,9 +16,11 @@ section,.post{background:white;padding:18px;margin:15px 0;border-radius:12px;box
 input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
 textarea{min-height:100px}
 button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:white;margin:5px;cursor:pointer;font-size:15px}
+button:disabled{opacity:.5;cursor:not-allowed}
 .green{background:#15803d}
 .danger{background:#dc2626}
 .gray{background:#475569}
+.orange{background:#c2410c}
 .hidden{display:none!important}
 .post{border-left:5px solid #0284c7;overflow-wrap:anywhere}
 .status{font-weight:bold;color:#075985}
@@ -35,24 +37,19 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .notification{border-left:5px solid #0284c7;padding:14px;margin:10px 0;background:#f0f9ff;border-radius:8px}
 .notification.unread{border-left-color:#16a34a;background:#f0fdf4}
 .notification p{overflow-wrap:anywhere}
-
-/* UNREAD NOTIFICATION BADGE */
-.unread-badge{
-  display:inline-block;
-  background:#dc2626;
-  color:white;
-  border-radius:50%;
-  min-width:25px;
-  height:25px;
-  line-height:25px;
-  text-align:center;
-  font-size:14px;
-  margin-left:8px;
-  padding:0 6px;
-}
-
+.unread-badge{display:inline-block;background:#dc2626;color:white;border-radius:50%;min-width:25px;height:25px;line-height:25px;text-align:center;font-size:14px;margin-left:8px;padding:0 6px}
+.report-card{border-left:5px solid #dc2626}
+.report-card.reviewed{border-left-color:#15803d}
+.report-card.dismissed{border-left-color:#64748b}
+.report-details{background:#f8fafc;padding:12px;border-radius:8px;margin:10px 0;overflow-wrap:anywhere}
+.report-status{display:inline-block;padding:5px 10px;border-radius:20px;background:#fef3c7;color:#92400e;font-weight:bold}
+.report-status.reviewed{background:#dcfce7;color:#166534}
+.report-status.dismissed{background:#e2e8f0;color:#334155}
 footer{text-align:center;padding:20px;color:#64748b}
-@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){
+.stats{grid-template-columns:repeat(2,1fr)}
+button{max-width:100%}
+}
 </style>
 </head>
 <body>
@@ -157,11 +154,22 @@ footer{text-align:center;padding:20px;color:#64748b}
 
 <section id="reportsPanel" class="hidden">
 <h2>Admin Reports Dashboard</h2>
+
 <div class="stats">
 <div class="stat"><h3>Total Reports</h3><strong id="totalReports">0</strong></div>
 <div class="stat"><h3>Pending Reports</h3><strong id="pendingReports">0</strong></div>
 <div class="stat"><h3>Reviewed Reports</h3><strong id="reviewedReports">0</strong></div>
+<div class="stat"><h3>Dismissed Reports</h3><strong id="dismissedReports">0</strong></div>
 </div>
+
+<h3>Filter Reports</h3>
+<select id="reportFilter" onchange="loadReports()">
+<option value="all">All Reports</option>
+<option value="pending">Pending</option>
+<option value="reviewed">Reviewed</option>
+<option value="dismissed">Dismissed</option>
+</select>
+
 <button onclick="loadReports()">Refresh Reports</button>
 <div id="reportList">Loading reports...</div>
 </section>
@@ -303,60 +311,35 @@ async function loadProfile(){
 }
 
 async function saveProfile(){
-  if(!currentUser){
-    msg("Please login first.");
-    return;
-  }
+  if(!currentUser){msg("Please login first.");return;}
 
   const fullName=document.getElementById("profileName").value.trim();
-  if(!fullName){
-    msg("Please enter your full name.");
-    return;
-  }
+  if(!fullName){msg("Please enter your full name.");return;}
 
   const {data,error}=await db.from("nb_profiles")
     .update({full_name:fullName})
     .eq("id",currentUser.id)
     .select("id");
 
-  if(error){
-    msg("Profile save error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Profile save error: "+error.message);return;}
   if(!data||data.length===0){
     msg("Profile was not updated. Please contact support.");
     return;
   }
-
   msg("Your profile has been saved successfully.");
 }
 
 /* PROFILE PHOTO UPLOAD */
 
 async function uploadProfilePhoto(){
-  if(!currentUser){
-    msg("Please login first.");
-    return;
-  }
+  if(!currentUser){msg("Please login first.");return;}
 
   const input=document.getElementById("photoFile");
   const file=input.files[0];
 
-  if(!file){
-    msg("Please choose a photo first.");
-    return;
-  }
-
-  if(!file.type.startsWith("image/")){
-    msg("Please select an image file.");
-    return;
-  }
-
-  if(file.size>5*1024*1024){
-    msg("Image must be smaller than 5 MB.");
-    return;
-  }
+  if(!file){msg("Please choose a photo first.");return;}
+  if(!file.type.startsWith("image/")){msg("Please select an image file.");return;}
+  if(file.size>5*1024*1024){msg("Image must be smaller than 5 MB.");return;}
 
   const extensions={
     "image/jpeg":"jpg",
@@ -366,10 +349,7 @@ async function uploadProfilePhoto(){
   };
 
   const extension=extensions[file.type];
-  if(!extension){
-    msg("Please use JPG, PNG, WEBP or GIF.");
-    return;
-  }
+  if(!extension){msg("Please use JPG, PNG, WEBP or GIF.");return;}
 
   msg("Uploading photo...");
 
@@ -377,15 +357,9 @@ async function uploadProfilePhoto(){
 
   const {error:uploadError}=await db.storage
     .from("profile-photos")
-    .upload(path,file,{
-      contentType:file.type,
-      upsert:false
-    });
+    .upload(path,file,{contentType:file.type,upsert:false});
 
-  if(uploadError){
-    msg("Photo upload error: "+uploadError.message);
-    return;
-  }
+  if(uploadError){msg("Photo upload error: "+uploadError.message);return;}
 
   const {data:urlData}=db.storage
     .from("profile-photos")
@@ -397,10 +371,7 @@ async function uploadProfilePhoto(){
     .update({avatar_url:publicUrl})
     .eq("id",currentUser.id);
 
-  if(updateError){
-    msg("Photo uploaded but profile update failed: "+updateError.message);
-    return;
-  }
+  if(updateError){msg("Photo uploaded but profile update failed: "+updateError.message);return;}
 
   const photo=document.getElementById("profilePhoto");
   photo.src=publicUrl;
@@ -434,7 +405,6 @@ async function loadNotifications(){
   document.getElementById("notificationCount").textContent=
     "Total: "+notifications.length+" | Unread: "+unread;
 
-  /* UPDATE RED UNREAD BADGE */
   const badge=document.getElementById("unreadBadge");
   badge.textContent=unread;
   badge.classList.toggle("hidden",unread===0);
@@ -486,10 +456,7 @@ async function markNotificationRead(id){
     .eq("id",id)
     .eq("user_id",currentUser.id);
 
-  if(error){
-    msg("Could not mark notification as read: "+error.message);
-    return;
-  }
+  if(error){msg("Could not mark notification as read: "+error.message);return;}
 
   msg("Notification marked as read.");
   await loadNotifications();
@@ -503,10 +470,7 @@ async function markAllNotificationsRead(){
     .eq("user_id",currentUser.id)
     .eq("is_read",false);
 
-  if(error){
-    msg("Could not update notifications: "+error.message);
-    return;
-  }
+  if(error){msg("Could not update notifications: "+error.message);return;}
 
   msg("All notifications marked as read.");
   await loadNotifications();
@@ -516,12 +480,9 @@ async function markAllNotificationsRead(){
 
 async function loadProfilePhotos(posts){
   const ids=[...new Set(posts.map(p=>p.owner_id).filter(Boolean))];
-
   if(ids.length===0)return {};
 
-  const {data,error}=await db.rpc("nb_get_profile_photos",{
-    user_ids:ids
-  });
+  const {data,error}=await db.rpc("nb_get_profile_photos",{user_ids:ids});
 
   if(error){
     console.error("Profile photos error:",error.message);
@@ -529,10 +490,7 @@ async function loadProfilePhotos(posts){
   }
 
   const photos={};
-  (data||[]).forEach(p=>{
-    photos[p.id]=p.avatar_url;
-  });
-
+  (data||[]).forEach(p=>{photos[p.id]=p.avatar_url;});
   return photos;
 }
 
@@ -553,7 +511,6 @@ function addRequestOwner(div,post,photos){
   const label=document.createElement("span");
   label.textContent="Help Request";
   owner.appendChild(label);
-
   div.appendChild(owner);
 }
 
@@ -604,10 +561,7 @@ async function loadRequests(){
     .select("id,owner_id,title,post_type,status,description,country,city,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){
-    posts.textContent="Error: "+error.message;
-    return;
-  }
+  if(error){posts.textContent="Error: "+error.message;return;}
 
   const allPosts=data||[];
   const requests=allPosts.filter(p=>p.post_type==="request");
@@ -692,17 +646,23 @@ async function loadRequests(){
 
 async function changePostStatus(id,status){
   if(!isAdmin){msg("Administrator access required.");return;}
+
   const {error}=await db.from("nb_posts").update({status}).eq("id",id);
+
   if(error){msg("Update error: "+error.message);return;}
+
   msg("Request status changed to: "+status);
   await loadRequests();
 }
 
 async function loadDashboardStats(){
   if(!isAdmin)return;
+
   const {data,error}=await db.rpc("nb_admin_dashboard_stats");
+
   if(error){msg("Dashboard stats error: "+error.message);return;}
   if(!data||data.length===0){msg("Admin statistics are unavailable.");return;}
+
   const stats=data[0];
   document.getElementById("totalUsers").textContent=stats.total_users;
   document.getElementById("totalCategories").textContent=stats.total_categories;
@@ -713,6 +673,7 @@ async function loadDashboardStats(){
 
 async function reportPost(postId){
   if(!currentUser){msg("Please login first.");return;}
+
   const reason=prompt("Please enter the reason for this report:");
   if(!reason||!reason.trim())return;
 
@@ -721,12 +682,14 @@ async function reportPost(postId){
     post_id:postId,
     reason:reason.trim()
   });
+
   if(error){msg("Report error: "+error.message);return;}
   msg("Report submitted successfully.");
 }
 
 async function loadReports(){
   if(!isAdmin)return;
+
   const box=document.getElementById("reportList");
   box.textContent="Loading reports...";
 
@@ -734,43 +697,157 @@ async function loadReports(){
     .select("id,post_id,reporter_id,reason,status,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){box.textContent="Reports error: "+error.message;return;}
+  if(error){
+    box.textContent="Reports error: "+error.message;
+    msg("Reports error: "+error.message);
+    return;
+  }
 
   const reports=data||[];
+
   document.getElementById("totalReports").textContent=reports.length;
-  document.getElementById("pendingReports").textContent=reports.filter(r=>!r.status||r.status==="pending").length;
-  document.getElementById("reviewedReports").textContent=reports.filter(r=>r.status==="reviewed").length;
+  document.getElementById("pendingReports").textContent=
+    reports.filter(r=>!r.status||r.status==="pending").length;
+  document.getElementById("reviewedReports").textContent=
+    reports.filter(r=>r.status==="reviewed").length;
+  document.getElementById("dismissedReports").textContent=
+    reports.filter(r=>r.status==="dismissed").length;
+
+  const postIds=[...new Set(reports.map(r=>r.post_id).filter(Boolean))];
+  let postMap={};
+
+  if(postIds.length){
+    const {data:postData,error:postError}=await db.from("nb_posts")
+      .select("id,title,description,status,country,city")
+      .in("id",postIds);
+
+    if(postError){
+      console.error("Reported posts loading error:",postError.message);
+    }else{
+      (postData||[]).forEach(p=>{postMap[p.id]=p;});
+    }
+  }
+
+  const filter=document.getElementById("reportFilter").value;
+  const filtered=filter==="all"
+    ?reports
+    :reports.filter(r=>(r.status||"pending")===filter);
+
   box.innerHTML="";
 
-  if(reports.length===0){box.textContent="No reports found.";return;}
+  if(filtered.length===0){
+    box.textContent="No reports found for this filter.";
+    return;
+  }
 
-  reports.forEach(report=>{
+  filtered.forEach(report=>{
     const div=document.createElement("div");
-    div.className="post";
-    div.innerHTML="<h3>Report</h3>"+
-      "<p>Post ID: "+safe(report.post_id)+"</p>"+
-      "<p>Reason: "+safe(report.reason)+"</p>"+
-      "<p>Reporter: "+safe(report.reporter_id)+"</p>"+
-      "<p>Status: "+safe(report.status)+"</p>"+
-      "<p>Date: "+safe(report.created_at)+"</p>";
+    const status=report.status||"pending";
 
-    if(report.status!=="reviewed"){
-      const button=document.createElement("button");
-      button.className="green";
-      button.textContent="Mark Reviewed";
-      button.onclick=()=>markReviewed(report.id);
-      div.appendChild(button);
+    div.className="post report-card "+status;
+
+    const heading=document.createElement("h3");
+    heading.textContent="🚩 Report Details";
+    div.appendChild(heading);
+
+    const badge=document.createElement("span");
+    badge.className="report-status "+status;
+    badge.textContent=status.toUpperCase();
+    div.appendChild(badge);
+
+    const details=document.createElement("div");
+    details.className="report-details";
+
+    const reason=document.createElement("p");
+    reason.textContent="Reason: "+(report.reason||"No reason provided");
+    details.appendChild(reason);
+
+    const reporter=document.createElement("p");
+    reporter.textContent="Reporter ID: "+report.reporter_id;
+    details.appendChild(reporter);
+
+    const date=document.createElement("p");
+    date.textContent="Reported: "+new Date(report.created_at).toLocaleString();
+    details.appendChild(date);
+
+    const reportedPost=postMap[report.post_id];
+
+    const postTitle=document.createElement("h4");
+    postTitle.textContent="Reported Help Request";
+    details.appendChild(postTitle);
+
+    if(reportedPost){
+      const title=document.createElement("p");
+      title.textContent="Title: "+(reportedPost.title||"Untitled");
+      details.appendChild(title);
+
+      const description=document.createElement("p");
+      description.textContent="Description: "+(reportedPost.description||"");
+      details.appendChild(description);
+
+      const location=document.createElement("p");
+      location.textContent="Location: "+(reportedPost.city||"")+" "+(reportedPost.country||"");
+      details.appendChild(location);
+
+      const postStatus=document.createElement("p");
+      postStatus.textContent="Request Status: "+(reportedPost.status||"Unknown");
+      details.appendChild(postStatus);
+    }else{
+      const missing=document.createElement("p");
+      missing.textContent="The reported post is unavailable or was deleted.";
+      details.appendChild(missing);
     }
+
+    div.appendChild(details);
+
+    const idText=document.createElement("small");
+    idText.textContent="Report ID: "+report.id;
+    div.appendChild(idText);
+
+    if(status!=="reviewed"){
+      const reviewButton=document.createElement("button");
+      reviewButton.className="green";
+      reviewButton.textContent="Mark Reviewed";
+      reviewButton.onclick=()=>setReportStatus(report.id,"reviewed");
+      div.appendChild(reviewButton);
+    }
+
+    if(status!=="dismissed"){
+      const dismissButton=document.createElement("button");
+      dismissButton.className="gray";
+      dismissButton.textContent="Dismiss Report";
+      dismissButton.onclick=()=>setReportStatus(report.id,"dismissed");
+      div.appendChild(dismissButton);
+    }
+
+    if(status!=="pending"){
+      const reopenButton=document.createElement("button");
+      reopenButton.className="orange";
+      reopenButton.textContent="Reopen Report";
+      reopenButton.onclick=()=>setReportStatus(report.id,"pending");
+      div.appendChild(reopenButton);
+    }
+
     box.appendChild(div);
   });
 }
 
-async function markReviewed(reportId){
-  if(!isAdmin){msg("Administrator access required.");return;}
+async function setReportStatus(reportId,status){
+  if(!isAdmin){
+    msg("Administrator access required.");
+    return;
+  }
+
   const {error}=await db.from("nb_reports")
-    .update({status:"reviewed"}).eq("id",reportId);
-  if(error){msg("Review error: "+error.message);return;}
-  msg("Report marked as reviewed.");
+    .update({status:status})
+    .eq("id",reportId);
+
+  if(error){
+    msg("Report update error: "+error.message);
+    return;
+  }
+
+  msg("Report status changed to "+status+".");
   await loadReports();
 }
 
@@ -778,6 +855,7 @@ async function markReviewed(reportId){
 
 async function loadUsers(){
   if(!isAdmin){msg("Administrator access required.");return;}
+
   const box=document.getElementById("usersList");
   box.textContent="Loading users...";
 
@@ -790,15 +868,33 @@ async function loadUsers(){
 
   const users=data?.users||[];
   box.innerHTML="";
-  if(users.length===0){box.textContent="No users found.";return;}
+
+  if(users.length===0){
+    box.textContent="No users found.";
+    return;
+  }
 
   users.forEach(user=>{
     const div=document.createElement("div");
     div.className="post";
-    div.innerHTML="<h3>"+safe(user.full_name||"No name")+"</h3>"+
-      "<p>Email: "+safe(user.email)+"</p>"+
-      "<p>Registered: "+safe(user.created_at?new Date(user.created_at).toLocaleString():"Unknown")+"</p>"+
-      "<p class='status'>Status: "+(user.is_blocked?"Blocked":"Active")+"</p>";
+
+    const heading=document.createElement("h3");
+    heading.textContent=user.full_name||"No name";
+    div.appendChild(heading);
+
+    const email=document.createElement("p");
+    email.textContent="Email: "+user.email;
+    div.appendChild(email);
+
+    const registered=document.createElement("p");
+    registered.textContent="Registered: "+
+      (user.created_at?new Date(user.created_at).toLocaleString():"Unknown");
+    div.appendChild(registered);
+
+    const status=document.createElement("p");
+    status.className="status";
+    status.textContent="Status: "+(user.is_blocked?"Blocked":"Active");
+    div.appendChild(status);
 
     const button=document.createElement("button");
     button.className=user.is_blocked?"green":"danger";
@@ -812,6 +908,7 @@ async function loadUsers(){
 
 async function setUserBlocked(userId,blocked){
   if(!isAdmin){msg("Administrator access required.");return;}
+
   const action=blocked?"Block":"Unblock";
   if(!confirm(action+" this user?"))return;
 
@@ -825,6 +922,8 @@ async function setUserBlocked(userId,blocked){
   msg("User successfully "+(blocked?"blocked.":"unblocked."));
   await loadUsers();
 }
+
+/* AUTH SESSION */
 
 db.auth.onAuthStateChange(()=>{
   setTimeout(()=>{updateUser();},0);
