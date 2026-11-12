@@ -32,6 +32,9 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .request-owner{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .request-owner img{width:55px;height:55px;border-radius:50%;object-fit:cover}
 .request-owner span{font-weight:bold;color:#075985}
+.notification{border-left:5px solid #0284c7;padding:14px;margin:10px 0;background:#f0f9ff;border-radius:8px}
+.notification.unread{border-left-color:#16a34a;background:#f0fdf4}
+.notification p{overflow-wrap:anywhere}
 footer{text-align:center;padding:20px;color:#64748b}
 @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -67,6 +70,14 @@ footer{text-align:center;padding:20px;color:#64748b}
 <label for="profileName">Full Name</label>
 <input id="profileName" placeholder="Enter your full name">
 <button class="green" onclick="saveProfile()">Save Profile</button>
+</section>
+
+<section id="notificationsPanel" class="hidden">
+<h2>🔔 Notifications</h2>
+<p id="notificationCount">Your notifications</p>
+<button onclick="loadNotifications()">Refresh Notifications</button>
+<button class="green" onclick="markAllNotificationsRead()">Mark All as Read</button>
+<div id="notificationsList">Loading notifications...</div>
 </section>
 
 <section>
@@ -196,6 +207,7 @@ function updateUI(){
   document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("profilePanel").classList.toggle("hidden",!currentUser);
+  document.getElementById("notificationsPanel").classList.toggle("hidden",!currentUser);
 }
 
 async function updateUser(){
@@ -219,7 +231,12 @@ async function updateUser(){
   }
 
   updateUI();
-  if(currentUser)await loadProfile();
+
+  if(currentUser){
+    await loadProfile();
+    await loadNotifications();
+  }
+
   await loadRequests();
 
   if(isAdmin){
@@ -366,6 +383,104 @@ async function uploadProfilePhoto(){
   photo.classList.remove("hidden");
   input.value="";
   msg("Profile photo uploaded successfully!");
+}
+
+/* NOTIFICATIONS */
+
+async function loadNotifications(){
+  if(!currentUser)return;
+
+  const box=document.getElementById("notificationsList");
+  box.textContent="Loading notifications...";
+
+  const {data,error}=await db.from("nb_notifications")
+    .select("id,title,message,is_read,created_at")
+    .eq("user_id",currentUser.id)
+    .order("created_at",{ascending:false});
+
+  if(error){
+    box.textContent="Notifications error: "+error.message;
+    msg("Notifications error: "+error.message);
+    return;
+  }
+
+  const notifications=data||[];
+  const unread=notifications.filter(n=>!n.is_read).length;
+
+  document.getElementById("notificationCount").textContent=
+    "Total: "+notifications.length+" | Unread: "+unread;
+
+  box.innerHTML="";
+
+  if(notifications.length===0){
+    box.textContent="You have no notifications yet.";
+    return;
+  }
+
+  notifications.forEach(item=>{
+    const div=document.createElement("div");
+    div.className="notification"+(item.is_read?"":" unread");
+
+    const heading=document.createElement("h3");
+    heading.textContent=item.title;
+    div.appendChild(heading);
+
+    const message=document.createElement("p");
+    message.textContent=item.message;
+    div.appendChild(message);
+
+    const date=document.createElement("small");
+    date.textContent=new Date(item.created_at).toLocaleString();
+    div.appendChild(date);
+
+    const state=document.createElement("p");
+    state.textContent=item.is_read?"Read":"Unread";
+    div.appendChild(state);
+
+    if(!item.is_read){
+      const button=document.createElement("button");
+      button.className="green";
+      button.textContent="Mark as Read";
+      button.onclick=()=>markNotificationRead(item.id);
+      div.appendChild(button);
+    }
+
+    box.appendChild(div);
+  });
+}
+
+async function markNotificationRead(id){
+  if(!currentUser)return;
+
+  const {error}=await db.from("nb_notifications")
+    .update({is_read:true})
+    .eq("id",id)
+    .eq("user_id",currentUser.id);
+
+  if(error){
+    msg("Could not mark notification as read: "+error.message);
+    return;
+  }
+
+  msg("Notification marked as read.");
+  await loadNotifications();
+}
+
+async function markAllNotificationsRead(){
+  if(!currentUser)return;
+
+  const {error}=await db.from("nb_notifications")
+    .update({is_read:true})
+    .eq("user_id",currentUser.id)
+    .eq("is_read",false);
+
+  if(error){
+    msg("Could not update notifications: "+error.message);
+    return;
+  }
+
+  msg("All notifications marked as read.");
+  await loadNotifications();
 }
 
 /* PROFILE PHOTOS FOR HELP REQUESTS */
