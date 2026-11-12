@@ -28,6 +28,10 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .stat h3{font-size:14px}
 .stat strong{font-size:28px;color:#075985}
 .profile-photo{width:125px;height:125px;border-radius:50%;object-fit:cover;border:3px solid #0284c7;display:block;margin:12px auto}
+.request-photo{width:55px;height:55px;border-radius:50%;object-fit:cover;border:2px solid #0284c7;vertical-align:middle;margin-right:10px}
+.request-owner{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.request-owner img{width:55px;height:55px;border-radius:50%;object-fit:cover}
+.request-owner span{font-weight:bold;color:#075985}
 footer{text-align:center;padding:20px;color:#64748b}
 @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -55,13 +59,10 @@ footer{text-align:center;padding:20px;color:#64748b}
 <section id="profilePanel" class="hidden">
 <h2>My Profile</h2>
 <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-
 <img id="profilePhoto" class="profile-photo hidden" alt="Profile Photo">
-
 <label for="photoFile">Choose Profile Photo</label>
 <input id="photoFile" type="file" accept="image/*">
 <button class="green" onclick="uploadProfilePhoto()">Upload Photo</button>
-
 <hr>
 <label for="profileName">Full Name</label>
 <input id="profileName" placeholder="Enter your full name">
@@ -267,7 +268,6 @@ async function saveProfile(){
   }
 
   const fullName=document.getElementById("profileName").value.trim();
-
   if(!fullName){
     msg("Please enter your full name.");
     return;
@@ -365,9 +365,55 @@ async function uploadProfilePhoto(){
   photo.src=publicUrl;
   photo.classList.remove("hidden");
   input.value="";
-
   msg("Profile photo uploaded successfully!");
 }
+
+/* PROFILE PHOTOS FOR HELP REQUESTS */
+
+async function loadProfilePhotos(posts){
+  const ids=[...new Set(posts.map(p=>p.owner_id).filter(Boolean))];
+
+  if(ids.length===0)return {};
+
+  const {data,error}=await db.rpc("nb_get_profile_photos",{
+    user_ids:ids
+  });
+
+  if(error){
+    console.error("Profile photos error:",error.message);
+    return {};
+  }
+
+  const photos={};
+  (data||[]).forEach(p=>{
+    photos[p.id]=p.avatar_url;
+  });
+
+  return photos;
+}
+
+function addRequestOwner(div,post,photos){
+  const owner=document.createElement("div");
+  owner.className="request-owner";
+
+  const photoUrl=photos[post.owner_id];
+
+  if(photoUrl){
+    const img=document.createElement("img");
+    img.src=photoUrl;
+    img.alt="Profile Photo";
+    img.loading="lazy";
+    owner.appendChild(img);
+  }
+
+  const label=document.createElement("span");
+  label.textContent="Help Request";
+  owner.appendChild(label);
+
+  div.appendChild(owner);
+}
+
+/* HELP REQUESTS */
 
 async function submitPost(){
   if(!currentUser){msg("Please login first.");return;}
@@ -414,10 +460,14 @@ async function loadRequests(){
     .select("id,owner_id,title,post_type,status,description,country,city,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){posts.textContent="Error: "+error.message;return;}
+  if(error){
+    posts.textContent="Error: "+error.message;
+    return;
+  }
 
   const allPosts=data||[];
   const requests=allPosts.filter(p=>p.post_type==="request");
+  const photos=await loadProfilePhotos(requests);
 
   if(isAdmin){
     document.getElementById("totalRequests").textContent=requests.length;
@@ -427,15 +477,34 @@ async function loadRequests(){
   }
 
   posts.innerHTML="";
-  if(allPosts.length===0){posts.textContent="No requests found.";return;}
+
+  if(allPosts.length===0){
+    posts.textContent="No requests found.";
+    return;
+  }
 
   allPosts.forEach(post=>{
     const div=document.createElement("div");
     div.className="post";
-    div.innerHTML="<h3>"+safe(post.title)+"</h3>"+
-      "<p>"+safe(post.description)+"</p>"+
-      "<p>"+safe(post.city)+" "+safe(post.country)+"</p>"+
-      "<p class='status'>Status: "+safe(post.status)+"</p>";
+
+    addRequestOwner(div,post,photos);
+
+    const heading=document.createElement("h3");
+    heading.textContent=post.title||"Help Request";
+    div.appendChild(heading);
+
+    const description=document.createElement("p");
+    description.textContent=post.description||"";
+    div.appendChild(description);
+
+    const location=document.createElement("p");
+    location.textContent=(post.city||"")+" "+(post.country||"");
+    div.appendChild(location);
+
+    const status=document.createElement("p");
+    status.className="status";
+    status.textContent="Status: "+(post.status||"");
+    div.appendChild(status);
 
     if(currentUser&&post.owner_id!==currentUser.id&&post.status==="approved"){
       const reportButton=document.createElement("button");
@@ -444,12 +513,22 @@ async function loadRequests(){
       reportButton.onclick=()=>reportPost(post.id);
       div.appendChild(reportButton);
     }
+
     posts.appendChild(div);
 
     if(isAdmin&&post.post_type==="request"&&post.status==="pending"){
       const adminDiv=document.createElement("div");
       adminDiv.className="post";
-      adminDiv.innerHTML="<h3>"+safe(post.title)+"</h3><p>"+safe(post.description)+"</p>";
+
+      addRequestOwner(adminDiv,post,photos);
+
+      const adminHeading=document.createElement("h3");
+      adminHeading.textContent=post.title||"Help Request";
+      adminDiv.appendChild(adminHeading);
+
+      const adminDescription=document.createElement("p");
+      adminDescription.textContent=post.description||"";
+      adminDiv.appendChild(adminDescription);
 
       const approveButton=document.createElement("button");
       approveButton.className="green";
@@ -485,6 +564,8 @@ async function loadDashboardStats(){
   document.getElementById("totalCategories").textContent=stats.total_categories;
   document.getElementById("activeUsers").textContent=stats.active_users;
 }
+
+/* REPORTS */
 
 async function reportPost(postId){
   if(!currentUser){msg("Please login first.");return;}
