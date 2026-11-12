@@ -51,6 +51,14 @@ footer{text-align:center;padding:20px;color:#64748b}
 <p id="userStatus">Not logged in</p>
 </section>
 
+<section id="profilePanel" class="hidden">
+<h2>My Profile</h2>
+<p><strong>Email:</strong> <span id="profileEmail"></span></p>
+<label for="profileName">Full Name</label>
+<input id="profileName" placeholder="Enter your full name">
+<button class="green" onclick="saveProfile()">Save Profile</button>
+</section>
+
 <section>
 <h2>Request Help</h2>
 <input id="postTitle" placeholder="Request Title">
@@ -102,7 +110,6 @@ footer{text-align:center;padding:20px;color:#64748b}
 
 <button onclick="loadRequests()">Refresh Requests</button>
 <button onclick="loadDashboardStats()">Refresh User Stats</button>
-
 <div id="adminPosts"></div>
 
 <h3>User Management</h3>
@@ -128,7 +135,6 @@ footer{text-align:center;padding:20px;color:#64748b}
 <script>
 const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
 const SUPABASE_KEY="sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
-
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let currentUser=null;
@@ -147,50 +153,25 @@ function safe(value){
 async function signup(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-
-  if(!email||!password){
-    msg("Please enter your email and password.");
-    return;
-  }
-
+  if(!email||!password){msg("Please enter your email and password.");return;}
   const {error}=await db.auth.signUp({email,password});
-
-  if(error){
-    msg("Signup error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Signup error: "+error.message);return;}
   msg("Account created. Please confirm your email if requested.");
 }
 
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
-
-  if(!email||!password){
-    msg("Please enter your email and password.");
-    return;
-  }
-
+  if(!email||!password){msg("Please enter your email and password.");return;}
   const {error}=await db.auth.signInWithPassword({email,password});
-
-  if(error){
-    msg("Login error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Login error: "+error.message);return;}
   msg("Login successful.");
   await updateUser();
 }
 
 async function logout(){
   const {error}=await db.auth.signOut();
-
-  if(error){
-    msg(error.message);
-    return;
-  }
-
+  if(error){msg(error.message);return;}
   currentUser=null;
   isAdmin=false;
   updateUI();
@@ -202,14 +183,13 @@ async function logout(){
 function updateUI(){
   document.getElementById("userStatus").textContent=
     currentUser?"Logged in: "+currentUser.email:"Not logged in";
-
   document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
+  document.getElementById("profilePanel").classList.toggle("hidden",!currentUser);
 }
 
 async function updateUser(){
   const {data,error}=await db.auth.getUser();
-
   if(error){
     currentUser=null;
     isAdmin=false;
@@ -223,17 +203,13 @@ async function updateUser(){
 
   if(currentUser){
     const {data:adminData,error:adminError}=await db
-      .from("nb_admins")
-      .select("user_id")
-      .eq("user_id",currentUser.id)
-      .maybeSingle();
-
-    if(!adminError&&adminData){
-      isAdmin=true;
-    }
+      .from("nb_admins").select("user_id")
+      .eq("user_id",currentUser.id).maybeSingle();
+    if(!adminError&&adminData)isAdmin=true;
   }
 
   updateUI();
+  if(currentUser)await loadProfile();
   await loadRequests();
 
   if(isAdmin){
@@ -243,11 +219,61 @@ async function updateUser(){
   }
 }
 
-async function submitPost(){
+/* MY PROFILE */
+
+async function loadProfile(){
+  if(!currentUser)return;
+
+  document.getElementById("profileEmail").textContent=currentUser.email||"";
+  const nameInput=document.getElementById("profileName");
+  nameInput.value="";
+
+  const {data,error}=await db.from("nb_profiles")
+    .select("full_name")
+    .eq("id",currentUser.id)
+    .maybeSingle();
+
+  if(error){
+    msg("Profile loading error: "+error.message);
+    return;
+  }
+
+  if(data)nameInput.value=data.full_name||"";
+}
+
+async function saveProfile(){
   if(!currentUser){
     msg("Please login first.");
     return;
   }
+
+  const fullName=document.getElementById("profileName").value.trim();
+
+  if(!fullName){
+    msg("Please enter your full name.");
+    return;
+  }
+
+  const {data,error}=await db.from("nb_profiles")
+    .update({full_name:fullName})
+    .eq("id",currentUser.id)
+    .select("id");
+
+  if(error){
+    msg("Profile save error: "+error.message);
+    return;
+  }
+
+  if(!data||data.length===0){
+    msg("Profile was not updated. Please contact support.");
+    return;
+  }
+
+  msg("Your profile has been saved successfully.");
+}
+
+async function submitPost(){
+  if(!currentUser){msg("Please login first.");return;}
 
   const title=document.getElementById("postTitle").value.trim();
   const category=document.getElementById("category").value;
@@ -270,26 +296,20 @@ async function submitPost(){
     city:city
   });
 
-  if(error){
-    msg("Request error: "+error.message);
-    return;
-  }
+  if(error){msg("Request error: "+error.message);return;}
 
   msg("Your help request has been submitted.");
-
   document.getElementById("postTitle").value="";
   document.getElementById("description").value="";
   document.getElementById("country").value="";
   document.getElementById("city").value="";
   document.getElementById("category").value="";
-
   await loadRequests();
 }
 
 async function loadRequests(){
   const posts=document.getElementById("posts");
   const admin=document.getElementById("adminPosts");
-
   posts.textContent="Loading requests...";
   admin.innerHTML="";
 
@@ -297,35 +317,24 @@ async function loadRequests(){
     .select("id,owner_id,title,post_type,status,description,country,city,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){
-    posts.textContent="Error: "+error.message;
-    return;
-  }
+  if(error){posts.textContent="Error: "+error.message;return;}
 
   const allPosts=data||[];
   const requests=allPosts.filter(p=>p.post_type==="request");
 
   if(isAdmin){
     document.getElementById("totalRequests").textContent=requests.length;
-    document.getElementById("pendingRequests").textContent=
-      requests.filter(p=>p.status==="pending").length;
-    document.getElementById("approvedRequests").textContent=
-      requests.filter(p=>p.status==="approved").length;
-    document.getElementById("rejectedRequests").textContent=
-      requests.filter(p=>p.status==="rejected").length;
+    document.getElementById("pendingRequests").textContent=requests.filter(p=>p.status==="pending").length;
+    document.getElementById("approvedRequests").textContent=requests.filter(p=>p.status==="approved").length;
+    document.getElementById("rejectedRequests").textContent=requests.filter(p=>p.status==="rejected").length;
   }
 
   posts.innerHTML="";
-
-  if(allPosts.length===0){
-    posts.textContent="No requests found.";
-    return;
-  }
+  if(allPosts.length===0){posts.textContent="No requests found.";return;}
 
   allPosts.forEach(post=>{
     const div=document.createElement("div");
     div.className="post";
-
     div.innerHTML="<h3>"+safe(post.title)+"</h3>"+
       "<p>"+safe(post.description)+"</p>"+
       "<p>"+safe(post.city)+" "+safe(post.country)+"</p>"+
@@ -338,15 +347,12 @@ async function loadRequests(){
       reportButton.onclick=()=>reportPost(post.id);
       div.appendChild(reportButton);
     }
-
     posts.appendChild(div);
 
     if(isAdmin&&post.post_type==="request"&&post.status==="pending"){
       const adminDiv=document.createElement("div");
       adminDiv.className="post";
-
-      adminDiv.innerHTML="<h3>"+safe(post.title)+"</h3>"+
-        "<p>"+safe(post.description)+"</p>";
+      adminDiv.innerHTML="<h3>"+safe(post.title)+"</h3><p>"+safe(post.description)+"</p>";
 
       const approveButton=document.createElement("button");
       approveButton.className="green";
@@ -365,54 +371,27 @@ async function loadRequests(){
 }
 
 async function changePostStatus(id,status){
-  if(!isAdmin){
-    msg("Administrator access required.");
-    return;
-  }
-
-  const {error}=await db.from("nb_posts")
-    .update({status})
-    .eq("id",id);
-
-  if(error){
-    msg("Update error: "+error.message);
-    return;
-  }
-
+  if(!isAdmin){msg("Administrator access required.");return;}
+  const {error}=await db.from("nb_posts").update({status}).eq("id",id);
+  if(error){msg("Update error: "+error.message);return;}
   msg("Request status changed to: "+status);
   await loadRequests();
 }
 
 async function loadDashboardStats(){
   if(!isAdmin)return;
-
   const {data,error}=await db.rpc("nb_admin_dashboard_stats");
-
-  if(error){
-    msg("Dashboard stats error: "+error.message);
-    return;
-  }
-
-  if(!data||data.length===0){
-    msg("Admin statistics are unavailable.");
-    return;
-  }
-
+  if(error){msg("Dashboard stats error: "+error.message);return;}
+  if(!data||data.length===0){msg("Admin statistics are unavailable.");return;}
   const stats=data[0];
-
   document.getElementById("totalUsers").textContent=stats.total_users;
   document.getElementById("totalCategories").textContent=stats.total_categories;
   document.getElementById("activeUsers").textContent=stats.active_users;
 }
 
 async function reportPost(postId){
-  if(!currentUser){
-    msg("Please login first.");
-    return;
-  }
-
+  if(!currentUser){msg("Please login first.");return;}
   const reason=prompt("Please enter the reason for this report:");
-
   if(!reason||!reason.trim())return;
 
   const {error}=await db.from("nb_reports").insert({
@@ -420,18 +399,12 @@ async function reportPost(postId){
     post_id:postId,
     reason:reason.trim()
   });
-
-  if(error){
-    msg("Report error: "+error.message);
-    return;
-  }
-
+  if(error){msg("Report error: "+error.message);return;}
   msg("Report submitted successfully.");
 }
 
 async function loadReports(){
   if(!isAdmin)return;
-
   const box=document.getElementById("reportList");
   box.textContent="Loading reports...";
 
@@ -439,30 +412,19 @@ async function loadReports(){
     .select("id,post_id,reporter_id,reason,status,created_at")
     .order("created_at",{ascending:false});
 
-  if(error){
-    box.textContent="Reports error: "+error.message;
-    return;
-  }
+  if(error){box.textContent="Reports error: "+error.message;return;}
 
   const reports=data||[];
-
   document.getElementById("totalReports").textContent=reports.length;
-  document.getElementById("pendingReports").textContent=
-    reports.filter(r=>!r.status||r.status==="pending").length;
-  document.getElementById("reviewedReports").textContent=
-    reports.filter(r=>r.status==="reviewed").length;
-
+  document.getElementById("pendingReports").textContent=reports.filter(r=>!r.status||r.status==="pending").length;
+  document.getElementById("reviewedReports").textContent=reports.filter(r=>r.status==="reviewed").length;
   box.innerHTML="";
 
-  if(reports.length===0){
-    box.textContent="No reports found.";
-    return;
-  }
+  if(reports.length===0){box.textContent="No reports found.";return;}
 
   reports.forEach(report=>{
     const div=document.createElement("div");
     div.className="post";
-
     div.innerHTML="<h3>Report</h3>"+
       "<p>Post ID: "+safe(report.post_id)+"</p>"+
       "<p>Reason: "+safe(report.reason)+"</p>"+
@@ -477,26 +439,15 @@ async function loadReports(){
       button.onclick=()=>markReviewed(report.id);
       div.appendChild(button);
     }
-
     box.appendChild(div);
   });
 }
 
 async function markReviewed(reportId){
-  if(!isAdmin){
-    msg("Administrator access required.");
-    return;
-  }
-
+  if(!isAdmin){msg("Administrator access required.");return;}
   const {error}=await db.from("nb_reports")
-    .update({status:"reviewed"})
-    .eq("id",reportId);
-
-  if(error){
-    msg("Review error: "+error.message);
-    return;
-  }
-
+    .update({status:"reviewed"}).eq("id",reportId);
+  if(error){msg("Review error: "+error.message);return;}
   msg("Report marked as reviewed.");
   await loadReports();
 }
@@ -504,11 +455,7 @@ async function markReviewed(reportId){
 /* USER MANAGEMENT */
 
 async function loadUsers(){
-  if(!isAdmin){
-    msg("Administrator access required.");
-    return;
-  }
-
+  if(!isAdmin){msg("Administrator access required.");return;}
   const box=document.getElementById("usersList");
   box.textContent="Loading users...";
 
@@ -516,30 +463,17 @@ async function loadUsers(){
     body:{action:"list"}
   });
 
-  if(error){
-    box.textContent="Users error: "+error.message;
-    return;
-  }
-
-  if(data?.error){
-    box.textContent="Users error: "+data.error;
-    return;
-  }
+  if(error){box.textContent="Users error: "+error.message;return;}
+  if(data?.error){box.textContent="Users error: "+data.error;return;}
 
   const users=data?.users||[];
   box.innerHTML="";
-
-  if(users.length===0){
-    box.textContent="No users found.";
-    return;
-  }
+  if(users.length===0){box.textContent="No users found.";return;}
 
   users.forEach(user=>{
     const div=document.createElement("div");
     div.className="post";
-
-    div.innerHTML=
-      "<h3>"+safe(user.full_name||"No name")+"</h3>"+
+    div.innerHTML="<h3>"+safe(user.full_name||"No name")+"</h3>"+
       "<p>Email: "+safe(user.email)+"</p>"+
       "<p>Registered: "+safe(user.created_at?new Date(user.created_at).toLocaleString():"Unknown")+"</p>"+
       "<p class='status'>Status: "+(user.is_blocked?"Blocked":"Active")+"</p>";
@@ -547,7 +481,6 @@ async function loadUsers(){
     const button=document.createElement("button");
     button.className=user.is_blocked?"green":"danger";
     button.textContent=user.is_blocked?"Unblock User":"Block User";
-
     button.onclick=()=>setUserBlocked(user.id,!user.is_blocked);
 
     div.appendChild(button);
@@ -556,32 +489,16 @@ async function loadUsers(){
 }
 
 async function setUserBlocked(userId,blocked){
-  if(!isAdmin){
-    msg("Administrator access required.");
-    return;
-  }
-
+  if(!isAdmin){msg("Administrator access required.");return;}
   const action=blocked?"Block":"Unblock";
-
   if(!confirm(action+" this user?"))return;
 
   const {data,error}=await db.functions.invoke("bright-action",{
-    body:{
-      action:"set_block",
-      user_id:userId,
-      blocked:blocked
-    }
+    body:{action:"set_block",user_id:userId,blocked:blocked}
   });
 
-  if(error){
-    msg("User update error: "+error.message);
-    return;
-  }
-
-  if(!data?.success){
-    msg(data?.error||"User update failed.");
-    return;
-  }
+  if(error){msg("User update error: "+error.message);return;}
+  if(!data?.success){msg(data?.error||"User update failed.");return;}
 
   msg("User successfully "+(blocked?"blocked.":"unblocked."));
   await loadUsers();
