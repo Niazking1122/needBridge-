@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NeedBridge - Free Help Platform</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;color:#172033}
@@ -23,14 +24,17 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .post{border-left:5px solid #0284c7}
 .status{font-weight:bold;color:#075985}
 #message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .stat{background:#e0f2fe;padding:15px;text-align:center;border-radius:10px}
 .stat h3{font-size:14px}
 .stat strong{font-size:28px;color:#075985}
 footer{text-align:center;padding:20px;color:#64748b}
-@media(max-width:500px){.stats{grid-template-columns:1fr}}
+@media(max-width:600px){
+.stats{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -39,6 +43,7 @@ footer{text-align:center;padding:20px;color:#64748b}
 </header>
 
 <main>
+
 <div id="message" role="status"></div>
 
 <section>
@@ -54,6 +59,7 @@ footer{text-align:center;padding:20px;color:#64748b}
 <section>
 <h2>Request Help</h2>
 <input id="postTitle" placeholder="Request Title">
+
 <select id="category">
 <option value="">Select a Category</option>
 <option>Food</option>
@@ -63,9 +69,11 @@ footer{text-align:center;padding:20px;color:#64748b}
 <option>Clothing</option>
 <option>Volunteering</option>
 </select>
+
 <textarea id="description" placeholder="Describe what help you need"></textarea>
 <input id="country" placeholder="Country">
 <input id="city" placeholder="City">
+
 <button onclick="submitPost()">Submit Help Request</button>
 </section>
 
@@ -84,6 +92,32 @@ footer{text-align:center;padding:20px;color:#64748b}
 <section id="adminPanel" class="hidden">
 <h2>Admin Dashboard</h2>
 <p>You are logged in as an Administrator.</p>
+
+<div class="stats">
+
+<div class="stat">
+<h3>Total Help Requests</h3>
+<strong id="totalRequests">0</strong>
+</div>
+
+<div class="stat">
+<h3>Pending Requests</h3>
+<strong id="pendingRequests">0</strong>
+</div>
+
+<div class="stat">
+<h3>Approved Requests</h3>
+<strong id="approvedRequests">0</strong>
+</div>
+
+<div class="stat">
+<h3>Rejected Requests</h3>
+<strong id="rejectedRequests">0</strong>
+</div>
+
+</div>
+
+<button onclick="loadRequests()">Refresh Dashboard</button>
 <div id="adminPosts"></div>
 </section>
 
@@ -91,18 +125,22 @@ footer{text-align:center;padding:20px;color:#64748b}
 <h2>Admin Reports Dashboard</h2>
 
 <div class="stats">
+
 <div class="stat">
 <h3>Total Reports</h3>
 <strong id="totalReports">0</strong>
 </div>
+
 <div class="stat">
 <h3>Pending Reports</h3>
 <strong id="pendingReports">0</strong>
 </div>
+
 <div class="stat">
 <h3>Reviewed Reports</h3>
 <strong id="reviewedReports">0</strong>
 </div>
+
 </div>
 
 <button onclick="loadReports()">Refresh Reports</button>
@@ -116,9 +154,11 @@ footer{text-align:center;padding:20px;color:#64748b}
 <script>
 const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
 const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
-const ADMIN_ID = "0226963d-a946-498c-a977-f3eeac1c02f3";
 
-const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 let currentUser = null;
 let isAdmin = false;
@@ -129,7 +169,11 @@ function msg(message){
 
 function safe(value){
   return String(value || "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
   }[c]));
 }
 
@@ -184,10 +228,11 @@ async function logout(){
   isAdmin=false;
   updateUI();
   msg("Logout successful.");
+  await loadRequests();
 }
 
 function updateUI(){
-  document.getElementById("userStatus").textContent=
+  document.getElementById("userStatus").textContent =
     currentUser ? "Logged in: "+currentUser.email : "Not logged in";
 
   document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
@@ -221,6 +266,7 @@ async function updateUser(){
   }
 
   updateUI();
+
   await loadRequests();
 
   if(isAdmin){
@@ -266,6 +312,7 @@ async function submitPost(){
   document.getElementById("description").value="";
   document.getElementById("country").value="";
   document.getElementById("city").value="";
+  document.getElementById("category").value="";
 
   await loadRequests();
 }
@@ -278,22 +325,40 @@ async function loadRequests(){
   admin.innerHTML="";
 
   const {data,error}=await db.from("nb_posts")
-    .select("id,owner_id,title,status,description,country,city,created_at")
+    .select("id,owner_id,title,post_type,status,description,country,city,created_at")
     .order("created_at",{ascending:false});
 
   if(error){
     posts.textContent="Error: "+error.message;
+    admin.textContent="Could not load admin requests.";
     return;
+  }
+
+  const allPosts=data || [];
+
+  if(isAdmin){
+    const requests=allPosts.filter(p=>p.post_type==="request");
+
+    document.getElementById("totalRequests").textContent=requests.length;
+
+    document.getElementById("pendingRequests").textContent=
+      requests.filter(p=>p.status==="pending").length;
+
+    document.getElementById("approvedRequests").textContent=
+      requests.filter(p=>p.status==="approved").length;
+
+    document.getElementById("rejectedRequests").textContent=
+      requests.filter(p=>p.status==="rejected").length;
   }
 
   posts.innerHTML="";
 
-  if(!data || data.length===0){
+  if(allPosts.length===0){
     posts.textContent="No requests found.";
     return;
   }
 
-  data.forEach(post=>{
+  allPosts.forEach(post=>{
     const div=document.createElement("div");
     div.className="post";
 
@@ -313,12 +378,14 @@ async function loadRequests(){
 
     posts.appendChild(div);
 
-    if(isAdmin && post.status==="pending"){
+    if(isAdmin && post.post_type==="request" && post.status==="pending"){
       const adminDiv=document.createElement("div");
       adminDiv.className="post";
+
       adminDiv.innerHTML=
         "<h3>"+safe(post.title)+"</h3>"+
-        "<p>"+safe(post.description)+"</p>";
+        "<p>"+safe(post.description)+"</p>"+
+        "<p>"+safe(post.city)+" "+safe(post.country)+"</p>";
 
       const approveButton=document.createElement("button");
       approveButton.className="green";
@@ -401,8 +468,10 @@ async function loadReports(){
   const reports=data || [];
 
   document.getElementById("totalReports").textContent=reports.length;
+
   document.getElementById("pendingReports").textContent=
     reports.filter(r=>!r.status || r.status==="pending").length;
+
   document.getElementById("reviewedReports").textContent=
     reports.filter(r=>r.status==="reviewed").length;
 
@@ -461,6 +530,7 @@ db.auth.onAuthStateChange(()=>{
 });
 
 updateUser();
+
 </script>
 </body>
 </html>
