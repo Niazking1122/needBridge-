@@ -35,6 +35,22 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:whi
 .notification{border-left:5px solid #0284c7;padding:14px;margin:10px 0;background:#f0f9ff;border-radius:8px}
 .notification.unread{border-left-color:#16a34a;background:#f0fdf4}
 .notification p{overflow-wrap:anywhere}
+
+/* UNREAD NOTIFICATION BADGE */
+.unread-badge{
+  display:inline-block;
+  background:#dc2626;
+  color:white;
+  border-radius:50%;
+  min-width:25px;
+  height:25px;
+  line-height:25px;
+  text-align:center;
+  font-size:14px;
+  margin-left:8px;
+  padding:0 6px;
+}
+
 footer{text-align:center;padding:20px;color:#64748b}
 @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -73,7 +89,7 @@ footer{text-align:center;padding:20px;color:#64748b}
 </section>
 
 <section id="notificationsPanel" class="hidden">
-<h2>🔔 Notifications</h2>
+<h2>🔔 Notifications <span id="unreadBadge" class="unread-badge hidden">0</span></h2>
 <p id="notificationCount">Your notifications</p>
 <button onclick="loadNotifications()">Refresh Notifications</button>
 <button class="green" onclick="markAllNotificationsRead()">Mark All as Read</button>
@@ -208,6 +224,14 @@ function updateUI(){
   document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
   document.getElementById("profilePanel").classList.toggle("hidden",!currentUser);
   document.getElementById("notificationsPanel").classList.toggle("hidden",!currentUser);
+
+  if(!currentUser){
+    const badge=document.getElementById("unreadBadge");
+    badge.textContent="0";
+    badge.classList.add("hidden");
+    document.getElementById("notificationCount").textContent="Your notifications";
+    document.getElementById("notificationsList").textContent="Please login to view notifications.";
+  }
 }
 
 async function updateUser(){
@@ -409,6 +433,11 @@ async function loadNotifications(){
 
   document.getElementById("notificationCount").textContent=
     "Total: "+notifications.length+" | Unread: "+unread;
+
+  /* UPDATE RED UNREAD BADGE */
+  const badge=document.getElementById("unreadBadge");
+  badge.textContent=unread;
+  badge.classList.toggle("hidden",unread===0);
 
   box.innerHTML="";
 
