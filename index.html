@@ -931,5 +931,162 @@ db.auth.onAuthStateChange(()=>{
 
 updateUser();
 </script>
+<!-- NeedBridge Inbox -->
+<section id="chatPanel" class="hidden">
+  <h2>💬 Inbox</h2>
+  <button onclick="loadConversations()">Refresh Conversations</button>
+  <div id="conversationList"></div>
+
+  <div id="chatBox" class="hidden">
+    <h3>Chat Messages</h3>
+    <div id="chatMessages"></div>
+    <textarea id="chatText" placeholder="Write a message..."></textarea>
+    <button onclick="sendChatMessage()">Send Message</button>
+    <input type="file" id="chatImage" accept="image/*">
+    <button onclick="sendChatImage()">Send Image</button>
+    <input type="file" id="chatVoice" accept="audio/*">
+    <button onclick="sendChatVoice()">Send Voice</button>
+  </div>
+/* NEEDBRIDGE CHAT */
+
+let activeConversation = null;
+
+async function loadConversations(){
+  if(!currentUser)return;
+
+  const box=document.getElementById("conversationList");
+  box.textContent="Loading Inbox...";
+
+  const {data,error}=await db.from("conversations")
+    .select("id,listing_id,requester_id,helper_id")
+    .order("created_at",{ascending:false});
+
+  if(error){box.textContent=error.message;return;}
+
+  box.innerHTML="";
+
+  (data||[]).forEach(c=>{
+    if(c.requester_id!==currentUser.id &&
+       c.helper_id!==currentUser.id)return;
+
+    const b=document.createElement("button");
+    b.textContent="Open Conversation";
+    b.onclick=()=>openConversation(c.id);
+    box.appendChild(b);
+  });
+
+  if(!box.children.length)box.textContent="No conversations yet.";
+}
+
+async function openConversation(id){
+  activeConversation=id;
+  document.getElementById("chatBox").classList.remove("hidden");
+  await loadChatMessages();
+}
+
+async function loadChatMessages(){
+  if(!activeConversation)return;
+
+  const box=document.getElementById("chatMessages");
+  box.textContent="Loading messages...";
+
+  const {data,error}=await db.from("messages")
+    .select("id,sender_id,body,created_at")
+    .eq("conversation_id",activeConversation)
+    .order("created_at");
+
+  if(error){box.textContent=error.message;return;}
+
+  box.innerHTML="";
+
+  for(const m of (data||[])){
+    const p=document.createElement("p");
+
+    if(m.body.startsWith("IMAGE:") || m.body.startsWith("VOICE:")){
+      const path=m.body.split(":")[1];
+      const {data:url}=await db.storage.from("chat-media")
+        .createSignedUrl(path,3600);
+
+      if(url){
+        if(m.body.startsWith("IMAGE:")){
+          const img=document.createElement("img");
+          img.src=url.signedUrl;
+          img.style.maxWidth="200px";
+          p.appendChild(img);
+        }else{
+          const audio=document.createElement("audio");
+          audio.controls=true;
+          audio.src=url.signedUrl;
+          p.appendChild(audio);
+        }
+      }
+    }else{
+      p.textContent=m.body;
+    }
+
+    box.appendChild(p);
+  }
+}
+
+async function sendChatMessage(){
+  const body=document.getElementById("chatText").value.trim();
+  if(!body || !activeConversation || !currentUser)return;
+
+  const {error}=await db.from("messages").insert({
+    conversation_id:activeConversation,
+    sender_id:currentUser.id,
+    body:body
+  });
+
+  if(error){msg(error.message);return;}
+
+  document.getElementById("chatText").value="";
+  await loadChatMessages();
+}
+
+async function sendChatFile(type){
+  if(!activeConversation || !currentUser)return;
+
+  const input=document.getElementById(
+    type==="IMAGE"?"chatImage":"chatVoice"
+  );
+  const file=input.files[0];
+
+  if(!file){msg("Choose a file first.");return;}
+
+  if(type==="IMAGE" && !file.type.startsWith("image/")){
+    msg("Choose an image.");return;
+  }
+  if(type==="VOICE" && !file.type.startsWith("audio/")){
+    msg("Choose an audio file.");return;
+  }
+  if(file.size>10*1024*1024){
+    msg("File must be under 10 MB.");return;
+  }
+
+  const path=activeConversation+"/"+currentUser.id+
+    "/"+Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+  const {error:uploadError}=await db.storage
+    .from("chat-media").upload(path,file);
+
+  if(uploadError){msg(uploadError.message);return;}
+
+  const {error}=await db.from("messages").insert({
+    conversation_id:activeConversation,
+    sender_id:currentUser.id,
+    body:type+":"+path
+  });
+
+  if(error){msg(error.message);return;}
+
+  input.value="";
+  await loadChatMessages();
+  msg("File sent successfully.");
+}
+
+function sendChatImage(){return sendChatFile("IMAGE");}
+function sendChatVoice(){return sendChatFile("VOICE");}
+</section>
 </body>
 </html>
