@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NeedBridge - Free Help Platform</title>
-  <link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#075985">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <meta name="google-site-verification" content="XWMqX5F26rqtmAoWGIVzNwA-bxM4CfKmoav7aCp5OPs" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="google-site-verification" content="XWMqX5F26rqtmAoWGIVzNwA-bxM4CfKmoav7aCp5OPs" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
@@ -71,6 +71,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #chatMessages{max-height:420px;overflow-y:auto}
 footer{text-align:center;padding:20px;color:#64748b}
 @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}button{max-width:100%}}
+#visaHelpPanel{border:2px solid #bae6fd;background:linear-gradient(180deg,#fff,#f0f9ff)}
+#visaHelpPanel h2{color:#075985}
+#visaHelpMessage{font-weight:bold;color:#075985;overflow-wrap:anywhere}
+#visaHelpPanel small{color:#475569}
 </style>
 </head>
 <body>
@@ -82,9 +86,7 @@ footer{text-align:center;padding:20px;color:#64748b}
   <p style="color:#38bdf8">Ask • Help • Grow Together</p>
 </header>
 <main>
-<div id="message" role="status"></div>
-
-<section>
+  <section>
 <h2>Login / Create Account</h2>
 <input id="email" type="email" placeholder="Email Address">
 <input id="password" type="password" placeholder="Password">
@@ -150,6 +152,47 @@ footer{text-align:center;padding:20px;color:#64748b}
 <button onclick="submitPost()">Submit Help Request</button>
 </section>
 
+<section id="visaHelpPanel">
+  <h2>🌍 Visa Help</h2>
+  <p>Find official visa information for your destination. Requirements depend on your passport, residence country and travel purpose.</p>
+
+  <label for="visaPassportCountry"><strong>Country of your passport</strong></label>
+  <input id="visaPassportCountry" type="text" placeholder="Example: Pakistan">
+
+  <label for="visaDestination"><strong>Destination country</strong></label>
+  <select id="visaDestination">
+    <option value="">Select destination country</option>
+    <option value="uk">United Kingdom</option>
+    <option value="usa">United States</option>
+    <option value="canada">Canada</option>
+    <option value="australia">Australia</option>
+    <option value="schengen">Schengen Area (Europe)</option>
+    <option value="turkey">Türkiye</option>
+    <option value="india">India</option>
+    <option value="uae">United Arab Emirates</option>
+    <option value="saudi">Saudi Arabia</option>
+    <option value="newzealand">New Zealand</option>
+    <option value="japan">Japan</option>
+    <option value="pakistan">Pakistan</option>
+  </select>
+
+  <label for="visaPurpose"><strong>Reason for travel</strong></label>
+  <select id="visaPurpose">
+    <option value="">Select visa purpose</option>
+    <option>Tourism / Visit</option>
+    <option>Study</option>
+    <option>Work</option>
+    <option>Family visit</option>
+    <option>Business</option>
+    <option>Transit</option>
+  </select>
+
+  <button type="button" onclick="openVisaPortal()">View Official Visa Information</button>
+  <p id="visaHelpMessage" role="status" aria-live="polite"></p>
+  <p><strong>Important:</strong> NeedBridge provides guidance and links only. It does not issue visas or submit applications. Always confirm the latest requirements, fees and application method on the destination government's official website or the embassy/consulate responsible for your place of residence. Never send your passport, passwords or payment to an unverified person.</p>
+  <p><small>First version: official information links for the destinations listed above. More destinations can be added later.</small></p>
+</section>
+
 <section>
 <h2>Help Categories</h2>
 <p>🍚 Food | 📚 Education | 🏥 Healthcare</p>
@@ -185,6 +228,8 @@ footer{text-align:center;padding:20px;color:#64748b}
 <p>Manage registered platform users.</p>
 <button onclick="loadUsers()">Refresh Users</button>
 <div id="usersList">Loading users...</div>
+</section>
+<div id="message" role="status"></div>
 </section>
 
 <section id="reportsPanel" class="hidden">
@@ -451,15 +496,15 @@ async function markNotificationRead(id){
  msg("Notification marked as read.");
  await loadNotifications();
 }
-
-async function markAllNotificationsRead(){
+  async function markAllNotificationsRead(){
  if(!currentUser)return;
  const {error}=await db.from("nb_notifications").update({is_read:true}).eq("user_id",currentUser.id).eq("is_read",false);
  if(error){msg("Could not update notifications: "+error.message);return;}
  msg("All notifications marked as read.");
  await loadNotifications();
 }
-  /* PROFILE PHOTOS FOR REQUESTS */
+
+/* PROFILE PHOTOS FOR REQUESTS */
 
 async function loadProfilePhotos(posts){
  const ids=[...new Set(posts.map(p=>p.owner_id).filter(Boolean))];
@@ -644,8 +689,7 @@ async function loadDashboardStats(){
  document.getElementById("totalCategories").textContent=stats.total_categories;
  document.getElementById("activeUsers").textContent=stats.active_users;
 }
-
-/* REPORTS */
+  /* REPORTS */
 
 async function reportPost(postId){
  if(!currentUser){msg("Please login first.");return;}
@@ -761,7 +805,8 @@ async function changeReportStatus(id,status){
  msg("Report status updated.");
  await loadReports();
 }
-  /* ADMIN USER MANAGEMENT */
+
+/* ADMIN USER MANAGEMENT */
 
 async function loadUsers(){
  if(!isAdmin)return;
@@ -800,8 +845,7 @@ async function startConversation(post){
  if(findError){msg("Conversation error: "+findError.message);return;}
 
  let conversation=existing;
-
- if(!conversation){
+   if(!conversation){
   const {data,error}=await db.from("conversations")
   .insert({
    listing_id:post.id,
@@ -891,32 +935,32 @@ async function loadChatMessages(){
   div.className="chat-message"+(item.sender_id===currentUser.id?" mine":"");
 
   if(item.body.startsWith("IMAGE:")||item.body.startsWith("VOICE:")){
-   const isImage=item.body.startsWith("IMAGE:");
-   const path=item.body.substring(item.body.indexOf(":")+1);
+   const parts=item.body.split(":");
+   const type=parts[0];
+   const path=parts.slice(1).join(":");
 
-   const {data:urlData,error:urlError}=await db.storage
-   .from("chat-media").createSignedUrl(path,3600);
+   const {data:urlData}=db.storage.from("chat-media").getPublicUrl(path);
 
-   if(urlError){
-    div.textContent="Media unavailable";
-   }else if(isImage){
+   if(type==="IMAGE"){
     const img=document.createElement("img");
-    img.src=urlData.signedUrl;
-    img.alt="Chat image";
+    img.src=urlData.publicUrl;
+    img.alt="Shared image";
     div.appendChild(img);
    }else{
     const audio=document.createElement("audio");
     audio.controls=true;
-    audio.src=urlData.signedUrl;
+    audio.src=urlData.publicUrl;
     div.appendChild(audio);
    }
   }else{
-   div.textContent=item.body;
+   const text=document.createElement("p");
+   text.textContent=item.body;
+   div.appendChild(text);
   }
 
-  const date=document.createElement("small");
-  date.textContent=new Date(item.created_at).toLocaleString();
-  div.appendChild(date);
+  const time=document.createElement("small");
+  time.textContent=new Date(item.created_at).toLocaleString();
+  div.appendChild(time);
 
   box.appendChild(div);
  }
@@ -925,10 +969,7 @@ async function loadChatMessages(){
 }
 
 async function sendChatMessage(){
- if(!currentUser||!activeConversation){
-  msg("Open a conversation first.");
-  return;
- }
+ if(!currentUser||!activeConversation){msg("Open a conversation first.");return;}
 
  const input=document.getElementById("chatText");
  const body=input.value.trim();
@@ -947,19 +988,13 @@ async function sendChatMessage(){
 }
 
 async function sendChatFile(inputId,type){
- if(!currentUser||!activeConversation){
-  msg("Open a conversation first.");
-  return;
- }
+ if(!currentUser||!activeConversation){msg("Open a conversation first.");return;}
 
  const input=document.getElementById(inputId);
  const file=input.files[0];
- if(!file){msg("Please choose a file.");return;}
 
- if(file.size>10*1024*1024){
-  msg("File must be smaller than 10 MB.");
-  return;
- }
+ if(!file){msg("Please choose a file first.");return;}
+ if(file.size>10*1024*1024){msg("File must be smaller than 10 MB.");return;}
 
  msg("Uploading file...");
 
@@ -991,8 +1026,7 @@ async function sendChatImage(){
 async function sendChatVoice(){
  await sendChatFile("chatVoice","VOICE");
 }
-
-/* START APP */
+  /* START APP */
 
 db.auth.onAuthStateChange(()=>{
  setTimeout(()=>{updateUser();},0);
@@ -1010,368 +1044,108 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-  
-<style>
-#welcomeScreen {
-  position: fixed;
-  inset: 0;
-  z-index: 999999;
-  background: radial-gradient(circle at top, #075985, #07152f 70%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: white;
-  font-family: Arial, sans-serif;
-  animation: welcomeFade 1s ease;
+
+
+<script>
+function openVisaPortal() {
+  const destination = document.getElementById("visaDestination").value;
+  const passportCountry = document.getElementById("visaPassportCountry").value.trim();
+  const purpose = document.getElementById("visaPurpose").value;
+  const message = document.getElementById("visaHelpMessage");
+
+  if (!passportCountry || !destination || !purpose) {
+    message.textContent = "Please enter your passport country and select a destination and travel purpose.";
+    return;
+  }
+
+  const officialVisaPages = {
+    uk: "https://www.gov.uk/government/organisations/uk-visas-and-immigration",
+    usa: "https://travel.state.gov/content/travel/en/us-visas.html",
+    canada: "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html",
+    australia: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    schengen: "https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/visa-policy_en",
+    turkey: "https://www.evisa.gov.tr/en/",
+    india: "https://indianvisaonline.gov.in/evisa/tvoa.html",
+    uae: "https://icp.gov.ae/en/",
+    saudi: "https://visa.visitsaudi.com/",
+    newzealand: "https://www.immigration.govt.nz/new-zealand-visas",
+    japan: "https://www.mofa.go.jp/j_info/visit/visa/index.html",
+    pakistan: "https://visa.nadra.gov.pk/"
+  };
+
+  const url = officialVisaPages[destination];
+  if (!url) {
+    message.textContent = "An official link is not available for this destination yet.";
+    return;
+  }
+
+  message.textContent = "Opening the official information page. Check the rules for " +
+    passportCountry + " passport holders and your purpose: " + purpose + ".";
+  window.open(url, "_blank", "noopener,noreferrer");
 }
-#welcomeScreen img {
-  width: 125px;
-  height: 125px;
-  animation: logoFloat 2s infinite ease-in-out,
-             logoGlow 2s infinite alternate;
-}
-#welcomeScreen h1 {
-  font-size: 38px;
-  margin: 18px 0 8px;
-  animation: textIn 1.5s ease;
-}
-#welcomeScreen p {
-  font-size: 18px;
-  margin: 8px;
-}
-#welcomeScreen button {
-  margin-top: 25px;
-  padding: 14px 32px;
-  border: 0;
-  border-radius: 30px;
-  background: #facc15;
-  color: #07152f;
-  font-size: 17px;
-  font-weight: bold;
-  cursor: pointer;
-}
-@keyframes logoFloat {
-  50% { transform: translateY(-14px) scale(1.05); }
-}
-@keyframes logoGlow {
-  from { filter: drop-shadow(0 0 5px #38bdf8); }
-  to { filter: drop-shadow(0 0 25px #facc15); }
-}
-@keyframes textIn {
-  from { opacity: 0; transform: translateY(25px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes welcomeFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+</script>
 
 <style>
-#welcomeScreen {
-  position:fixed;
-  inset:0;
-  z-index:999999;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  color:white;
-  text-align:center;
-  font-family:Arial,sans-serif;
-  background:
-    radial-gradient(circle at 50% 35%,#124d78 0%,#092849 42%,#030b1d 100%);
+#welcomeScreen{
+  position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;padding:24px;
+  color:white;text-align:center;font-family:Arial,sans-serif;
+  background:radial-gradient(circle at 50% 35%,#124d78,#07152f 65%,#020817);
   animation:welcomeIn 1s ease;
 }
-.wb-glow {
-  position:absolute;
-  width:260px;
-  height:260px;
-  border-radius:50%;
-  background:#0ea5e9;
-  filter:blur(90px);
-  opacity:.25;
-  animation:glowMove 4s infinite alternate;
+.wb-stars{position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(2px 2px at 20% 25%,white 99%,transparent),
+  radial-gradient(2px 2px at 75% 20%,#7dd3fc 99%,transparent),
+  radial-gradient(3px 3px at 85% 65%,white 99%,transparent),
+  radial-gradient(2px 2px at 30% 75%,#facc15 99%,transparent);
+  background-size:180px 180px;animation:starMove 12s linear infinite;
 }
-.wb-logo {
-  width:190px;
-  max-width:55vw;
-  z-index:1;
-  animation:logoFloat 3s ease-in-out infinite;
-  filter:drop-shadow(0 0 18px #38bdf8);
-}
-.wb-ring {
-  fill:none;
-  stroke:#facc15;
-  stroke-width:2;
-  stroke-dasharray:12 10;
-  transform-origin:50px 50px;
-  animation:ringSpin 12s linear infinite;
-}
-.wb-title {
-  z-index:1;
-  font-size:38px;
-  font-weight:900;
-  letter-spacing:1px;
-  margin:12px 0 4px;
+.wb-logo{width:175px;max-width:55vw;z-index:1;filter:drop-shadow(0 0 22px #38bdf8);
+  animation:logoFloat 3s ease-in-out infinite}
+.wb-ring{fill:none;stroke:#facc15;stroke-width:2;stroke-dasharray:12 10;
+  transform-origin:100px 100px;animation:ringSpin 12s linear infinite}
+.wb-welcome{z-index:1;font-size:22px;margin:12px 0}
+.wb-title{z-index:1;font-size:40px;font-weight:900;margin:8px 0;
   background:linear-gradient(90deg,#fff,#7dd3fc,#facc15,#fff);
-  background-size:200%;
-  color:transparent;
-  background-clip:text;
-  animation:titleShine 4s linear infinite;
-}
-.wb-welcome {
-  z-index:1;
-  font-size:23px;
-  margin:12px 0;
-  animation:welcomeText 1.5s ease both;
-}
-.wb-tagline {
-  z-index:1;
-  color:#bae6fd;
-  font-size:14px;
-  letter-spacing:2px;
-}
-.wb-message {
-  z-index:1;
-  margin:12px;
-  color:#e0f2fe;
-  font-size:16px;
-}
-.wb-button {
-  z-index:1;
-  margin-top:24px;
-  padding:15px 32px;
-  border:0;
-  border-radius:40px;
-  color:#082f49;
-  background:linear-gradient(100deg,#fde68a,#facc15);
-  font-size:17px;
-  font-weight:bold;
-  box-shadow:0 0 25px #facc1566;
-  animation:buttonPulse 2s infinite;
-  cursor:pointer;
-}
-@keyframes logoFloat {
-  0%,100% {transform:translateY(0) scale(1)}
-  50% {transform:translateY(-13px) scale(1.04)}
-}
-@keyframes ringSpin {
-  to {transform:rotate(360deg)}
-}
-@keyframes titleShine {
-  to {background-position:200% center}
-}
-@keyframes welcomeText {
-  from {opacity:0;transform:translateY(20px)}
-  to {opacity:1;transform:translateY(0)}
-}
-@keyframes buttonPulse {
-  50% {transform:scale(1.05);box-shadow:0 0 35px #facc15aa}
-}
-@keyframes glowMove {
-  to {transform:translate(40px,-25px) scale(1.3)}
-}
-@keyframes welcomeIn {
-  from {opacity:0}
-  to {opacity:1}
-}
-@media(prefers-reduced-motion:reduce) {
-  #welcomeScreen *,#welcomeScreen *:before {
-    animation:none!important;
-  }
-}
-</style>
-
-<div id="welcomeScreen">
-  <div class="wb-glow"></div>
-
-  <svg class="wb-logo" viewBox="0 0 200 200"
-       xmlns="http://www.w3.org/2000/svg">
-    <circle class="wb-ring" cx="100" cy="100" r="88"/>
-    <circle cx="100" cy="100" r="76"
-            fill="#075985" stroke="#7dd3fc" stroke-width="2"/>
-
-    <path d="M35 105 Q100 15 165 105"
-          fill="none" stroke="#facc15"
-          stroke-width="9" stroke-linecap="round"/>
-
-    <path d="M42 105 V133 M158 105 V133"
-          stroke="white" stroke-width="8"
-          stroke-linecap="round"/>
-
-    <path d="M38 133 Q100 158 162 133"
-          fill="none" stroke="white"
-          stroke-width="7" stroke-linecap="round"/>
-
-    <path d="M100 65 V105"
-          stroke="white" stroke-width="6"
-          stroke-linecap="round"/>
-
-    <circle cx="100" cy="48" r="12" fill="#facc15"/>
-
-    <path d="M77 111 Q100 92 123 111"
-          fill="none" stroke="#7dd3fc"
-          stroke-width="7" stroke-linecap="round"/>
-
-    <path d="M65 119 Q50 103 42 119
-             M135 119 Q150 103 158 119"
-          fill="none" stroke="#facc15"
-          stroke-width="6" stroke-linecap="round"/>
-  </svg>
-
-<style>
-#welcomeScreen {
-  position:fixed;
-  inset:0;
-  z-index:999999;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  color:white;
-  text-align:center;
-  font-family:Arial,sans-serif;
-  background:radial-gradient(circle at 50% 35%,#124d78,#07152f 65%,#020817);
-}
-.wb-stars {
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background-image:
-    radial-gradient(2px 2px at 20% 25%,white 99%,transparent),
-    radial-gradient(2px 2px at 75% 20%,#7dd3fc 99%,transparent),
-    radial-gradient(3px 3px at 85% 65%,white 99%,transparent),
-    radial-gradient(2px 2px at 30% 75%,#facc15 99%,transparent),
-    radial-gradient(2px 2px at 55% 12%,white 99%,transparent);
-  background-size:180px 180px;
-  animation:starMove 12s linear infinite,starGlow 2s infinite alternate;
-}
-.wb-logo {
-  width:190px;
-  max-width:55vw;
-  z-index:1;
-  animation:logoFloat 3s ease-in-out infinite;
-  filter:drop-shadow(0 0 22px #38bdf8);
-}
-.wb-ring {
-  fill:none;
-  stroke:#facc15;
-  stroke-width:2;
-  stroke-dasharray:12 10;
-  transform-origin:100px 100px;
-  animation:ringSpin 12s linear infinite;
-}
-.wb-title {
-  z-index:1;
-  font-size:40px;
-  font-weight:900;
-  margin:12px 0;
-  background:linear-gradient(90deg,#fff,#7dd3fc,#facc15,#fff);
-  background-size:200%;
-  color:transparent;
-  background-clip:text;
-  animation:titleShine 4s linear infinite;
-}
-.wb-welcome {
-  z-index:1;
-  font-size:23px;
-  animation:textIn 1.5s ease;
-}
-.wb-tagline {
-  z-index:1;
-  color:#bae6fd;
-  font-size:14px;
-  letter-spacing:2px;
-}
-.wb-message {
-  z-index:1;
-  margin:14px;
-  font-size:16px;
-  color:#e0f2fe;
-}
-.wb-button {
-  z-index:1;
-  margin-top:24px;
-  padding:15px 32px;
-  border:0;
-  border-radius:40px;
-  color:#082f49;
-  background:linear-gradient(100deg,#fde68a,#facc15);
-  font-size:17px;
-  font-weight:bold;
-  box-shadow:0 0 25px #facc1566;
-  animation:buttonPulse 2s infinite;
-  cursor:pointer;
-}
-@keyframes logoFloat {
-  50% {transform:translateY(-13px) scale(1.05)}
-}
-@keyframes ringSpin {
-  to {transform:rotate(360deg)}
-}
-@keyframes titleShine {
-  to {background-position:200% center}
-}
-@keyframes textIn {
-  from {opacity:0;transform:translateY(20px)}
-  to {opacity:1;transform:translateY(0)}
-}
-@keyframes buttonPulse {
-  50% {transform:scale(1.05);box-shadow:0 0 35px #facc15aa}
-}
-@keyframes starMove {
-  to {background-position:180px 180px}
-}
-@keyframes starGlow {
-  to {opacity:.4}
-}
+  background-size:200%;color:transparent;background-clip:text;
+  animation:titleShine 4s linear infinite}
+.wb-tagline{z-index:1;color:#bae6fd;font-size:13px;letter-spacing:2px}
+.wb-message{z-index:1;margin:14px;font-size:16px;color:#e0f2fe}
+.wb-button{z-index:1;margin-top:22px;padding:15px 30px;border:0;border-radius:40px;
+  color:#082f49;background:linear-gradient(100deg,#fde68a,#facc15);
+  font-size:17px;font-weight:bold;box-shadow:0 0 25px #facc1566;cursor:pointer}
+@keyframes logoFloat{50%{transform:translateY(-13px) scale(1.05)}}
+@keyframes ringSpin{to{transform:rotate(360deg)}}
+@keyframes titleShine{to{background-position:200% center}}
+@keyframes starMove{to{background-position:180px 180px}}
+@keyframes welcomeIn{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#welcomeScreen *{animation:none!important}}
 </style>
 
 <div id="welcomeScreen">
   <div class="wb-stars"></div>
-
-  <svg class="wb-logo" viewBox="0 0 200 200"
-       xmlns="http://www.w3.org/2000/svg">
+  <svg class="wb-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NeedBridge logo">
     <circle class="wb-ring" cx="100" cy="100" r="88"/>
-    <circle cx="100" cy="100" r="76"
-            fill="#075985" stroke="#7dd3fc" stroke-width="2"/>
-    <path d="M35 105 Q100 15 165 105"
-          fill="none" stroke="#facc15"
-          stroke-width="9" stroke-linecap="round"/>
-    <path d="M42 105 V133 M158 105 V133"
-          stroke="white" stroke-width="8"
-          stroke-linecap="round"/>
-    <path d="M38 133 Q100 158 162 133"
-          fill="none" stroke="white" stroke-width="7"/>
-    <path d="M100 65 V105"
-          stroke="white" stroke-width="6"/>
+    <circle cx="100" cy="100" r="76" fill="#075985" stroke="#7dd3fc" stroke-width="2"/>
+    <path d="M35 105 Q100 15 165 105" fill="none" stroke="#facc15" stroke-width="9" stroke-linecap="round"/>
+    <path d="M42 105 V133 M158 105 V133" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <path d="M38 133 Q100 158 162 133" fill="none" stroke="white" stroke-width="7" stroke-linecap="round"/>
+    <path d="M100 65 V105" stroke="white" stroke-width="6" stroke-linecap="round"/>
     <circle cx="100" cy="48" r="12" fill="#facc15"/>
-    <path d="M77 111 Q100 92 123 111"
-          fill="none" stroke="#7dd3fc" stroke-width="7"/>
+    <path d="M77 111 Q100 92 123 111" fill="none" stroke="#7dd3fc" stroke-width="7" stroke-linecap="round"/>
   </svg>
-
   <div class="wb-welcome">🤗 Welcome to Our Community!</div>
   <div class="wb-title">NeedBridge</div>
   <div class="wb-tagline">ASK • HELP • GROW TOGETHER</div>
-  <div class="wb-message">
-    A Place Where Helping Matters ❤️
-  </div>
-
-  <button class="wb-button"
-    onclick="document.getElementById('welcomeScreen').remove()">
-    Let's Get Started!
-  </button>
+  <div class="wb-message">A Place Where Helping Matters ❤️</div>
+  <button class="wb-button" type="button" onclick="document.getElementById('welcomeScreen').remove()">Let's Get Started!</button>
 </div>
-
 <script>
 setTimeout(function(){
   const screen=document.getElementById("welcomeScreen");
   if(screen) screen.remove();
 },8000);
 </script>
+
 </body>
 </html>
