@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,7 +15,7 @@ section,.post{background:white;padding:18px;margin:15px 0;border-radius:12px;box
 input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
 textarea{min-height:100px}
 button{padding:11px 16px;border:0;border-radius:7px;background:#0284c7;color:white;margin:5px;cursor:pointer;font-size:15px}
-button:disabled{opacity:.5}
+button:disabled{opacity:.5;cursor:not-allowed}
 .green{background:#15803d}
 .danger{background:#dc2626}
 .gray{background:#475569}
@@ -23,39 +23,38 @@ button:disabled{opacity:.5}
 .hidden{display:none!important}
 .post{border-left:5px solid #0284c7;overflow-wrap:anywhere}
 .status{font-weight:bold;color:#075985}
-#message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere;min-height:20px;background:#e0f2fe;color:#075985}
+#message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .stat{background:#e0f2fe;padding:15px;text-align:center;border-radius:10px}
 .stat h3{font-size:14px}
 .stat strong{font-size:28px;color:#075985}
 .profile-photo{width:125px;height:125px;border-radius:50%;object-fit:cover;border:3px solid #0284c7;display:block;margin:12px auto}
+.request-photo{width:55px;height:55px;border-radius:50%;object-fit:cover;border:2px solid #0284c7;vertical-align:middle;margin-right:10px}
 .request-owner{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .request-owner img{width:55px;height:55px;border-radius:50%;object-fit:cover}
 .request-owner span{font-weight:bold;color:#075985}
 .notification{border-left:5px solid #0284c7;padding:14px;margin:10px 0;background:#f0f9ff;border-radius:8px}
 .notification.unread{border-left-color:#16a34a;background:#f0fdf4}
-.unread-badge{background:#dc2626;color:white;border-radius:50%;padding:4px 9px}
+.notification p{overflow-wrap:anywhere}
+.unread-badge{display:inline-block;background:#dc2626;color:white;border-radius:50%;min-width:25px;height:25px;line-height:25px;text-align:center;font-size:14px;margin-left:8px;padding:0 6px}
 .report-card{border-left:5px solid #dc2626}
-.report-details{background:#f8fafc;padding:12px;border-radius:8px;margin:10px 0}
+.report-card.reviewed{border-left-color:#15803d}
+.report-card.dismissed{border-left-color:#64748b}
+.report-details{background:#f8fafc;padding:12px;border-radius:8px;margin:10px 0;overflow-wrap:anywhere}
+.report-status{display:inline-block;padding:5px 10px;border-radius:20px;background:#fef3c7;color:#92400e;font-weight:bold}
+.report-status.reviewed{background:#dcfce7;color:#166534}
+.report-status.dismissed{background:#e2e8f0;color:#334155}
 .chat-message{padding:10px;margin:8px 0;border-radius:9px;background:#f0f9ff;overflow-wrap:anywhere}
 .chat-message.mine{background:#dcfce7;margin-left:8%}
 .chat-message img{max-width:100%;max-height:260px;border-radius:8px;display:block}
 .chat-message audio{max-width:100%;display:block}
 #chatMessages{max-height:420px;overflow-y:auto}
 footer{text-align:center;padding:20px;color:#64748b}
-@media(max-width:600px){
-.stats{grid-template-columns:repeat(2,1fr)}
-button{max-width:100%}
-}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}button{max-width:100%}}
 </style>
 </head>
 <body>
-
-<header>
-<h1>NeedBridge</h1>
-<p>Free Global Help Platform</p>
-</header>
-
+<header><h1>NeedBridge</h1><p>Free Global Help Platform</p></header>
 <main>
 <div id="message" role="status"></div>
 
@@ -73,26 +72,28 @@ button{max-width:100%}
 <h2>My Profile</h2>
 <p><strong>Email:</strong> <span id="profileEmail"></span></p>
 <img id="profilePhoto" class="profile-photo hidden" alt="Profile Photo">
-<label>Choose Profile Photo</label>
+<label for="photoFile">Choose Profile Photo</label>
 <input id="photoFile" type="file" accept="image/*">
 <button class="green" onclick="uploadProfilePhoto()">Upload Photo</button>
 <hr>
+<label for="profileName">Full Name</label>
 <input id="profileName" placeholder="Enter your full name">
 <button class="green" onclick="saveProfile()">Save Profile</button>
 </section>
 
 <section id="notificationsPanel" class="hidden">
-<h2>🔔 Notifications <span id="unreadBadge" class="hidden">0</span></h2>
+<h2>🔔 Notifications <span id="unreadBadge" class="unread-badge hidden">0</span></h2>
 <p id="notificationCount">Your notifications</p>
 <button onclick="loadNotifications()">Refresh Notifications</button>
 <button class="green" onclick="markAllNotificationsRead()">Mark All as Read</button>
-<div id="notificationsList"></div>
+<div id="notificationsList">Loading notifications...</div>
 </section>
 
 <section id="chatPanel" class="hidden">
 <h2>💬 Inbox</h2>
+<p>Private conversations about approved help requests.</p>
 <button onclick="loadConversations()">Refresh Inbox</button>
-<div id="conversationList"></div>
+<div id="conversationList">Loading conversations...</div>
 <div id="chatBox" class="hidden">
 <h3>Chat Messages</h3>
 <div id="chatMessages"></div>
@@ -113,12 +114,9 @@ button{max-width:100%}
 <input id="postTitle" placeholder="Request Title">
 <select id="category">
 <option value="">Select a Category</option>
-<option>Food</option>
-<option>Education</option>
-<option>Healthcare</option>
-<option>Visa</option>
-<option>Clothing</option>
-<option>Volunteering</option>
+<option>Food</option><option>Education</option>
+<option>Healthcare</option><option>Visa</option>
+<option>Clothing</option><option>Volunteering</option>
 </select>
 <textarea id="description" placeholder="Describe what help you need"></textarea>
 <input id="country" placeholder="Country">
@@ -143,33 +141,35 @@ button{max-width:100%}
 <p>You are logged in as an Administrator.</p>
 <h3>Help Request Statistics</h3>
 <div class="stats">
-<div class="stat"><h3>Total Requests</h3><strong id="totalRequests">0</strong></div>
-<div class="stat"><h3>Pending</h3><strong id="pendingRequests">0</strong></div>
-<div class="stat"><h3>Approved</h3><strong id="approvedRequests">0</strong></div>
-<div class="stat"><h3>Rejected</h3><strong id="rejectedRequests">0</strong></div>
+<div class="stat"><h3>Total Help Requests</h3><strong id="totalRequests">0</strong></div>
+<div class="stat"><h3>Pending Requests</h3><strong id="pendingRequests">0</strong></div>
+<div class="stat"><h3>Approved Requests</h3><strong id="approvedRequests">0</strong></div>
+<div class="stat"><h3>Rejected Requests</h3><strong id="rejectedRequests">0</strong></div>
 </div>
 <h3>User Statistics</h3>
 <div class="stats">
 <div class="stat"><h3>Total Users</h3><strong id="totalUsers">0</strong></div>
-<div class="stat"><h3>Categories</h3><strong id="totalCategories">0</strong></div>
-<div class="stat"><h3>Active Users</h3><strong id="activeUsers">0</strong></div>
+<div class="stat"><h3>Total Categories</h3><strong id="totalCategories">0</strong></div>
+<div class="stat"><h3>Active Users (30 Days)</h3><strong id="activeUsers">0</strong></div>
 </div>
 <button onclick="loadRequests()">Refresh Requests</button>
 <button onclick="loadDashboardStats()">Refresh User Stats</button>
 <div id="adminPosts"></div>
 <h3>User Management</h3>
+<p>Manage registered platform users.</p>
 <button onclick="loadUsers()">Refresh Users</button>
-<div id="usersList"></div>
+<div id="usersList">Loading users...</div>
 </section>
 
 <section id="reportsPanel" class="hidden">
 <h2>Admin Reports Dashboard</h2>
 <div class="stats">
 <div class="stat"><h3>Total Reports</h3><strong id="totalReports">0</strong></div>
-<div class="stat"><h3>Pending</h3><strong id="pendingReports">0</strong></div>
-<div class="stat"><h3>Reviewed</h3><strong id="reviewedReports">0</strong></div>
-<div class="stat"><h3>Dismissed</h3><strong id="dismissedReports">0</strong></div>
+<div class="stat"><h3>Pending Reports</h3><strong id="pendingReports">0</strong></div>
+<div class="stat"><h3>Reviewed Reports</h3><strong id="reviewedReports">0</strong></div>
+<div class="stat"><h3>Dismissed Reports</h3><strong id="dismissedReports">0</strong></div>
 </div>
+<h3>Filter Reports</h3>
 <select id="reportFilter" onchange="loadReports()">
 <option value="all">All Reports</option>
 <option value="pending">Pending</option>
@@ -177,1083 +177,802 @@ button{max-width:100%}
 <option value="dismissed">Dismissed</option>
 </select>
 <button onclick="loadReports()">Refresh Reports</button>
-<div id="reportList"></div>
+<div id="reportList">Loading reports...</div>
 </section>
-
 </main>
+  <script>
+const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
+const SUPABASE_KEY="sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null;
+let isAdmin=false;
+let activeConversation=null;
+let chatChannel=null;
+
+function msg(message){
+ document.getElementById("message").textContent=message;
+}
+
+function safe(value){
+ return String(value||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function signup(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||!password){msg("Please enter your email and password.");return;}
+ const {error}=await db.auth.signUp({email,password});
+ if(error){msg("Signup error: "+error.message);return;}
+ msg("Account created. Please confirm your email if requested.");
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||!password){msg("Please enter your email and password.");return;}
+ const {error}=await db.auth.signInWithPassword({email,password});
+ if(error){msg("Login error: "+error.message);return;}
+ msg("Login successful.");
+ await updateUser();
+}
+
+async function logout(){
+ const {error}=await db.auth.signOut();
+ if(error){msg(error.message);return;}
+ if(chatChannel){
+  await db.removeChannel(chatChannel);
+  chatChannel=null;
+ }
+ currentUser=null;
+ isAdmin=false;
+ activeConversation=null;
+ updateUI();
+ document.getElementById("posts").textContent="Loading requests...";
+ await loadRequests();
+ msg("Logout successful.");
+}
+
+function updateUI(){
+ document.getElementById("userStatus").textContent=currentUser?"Logged in: "+currentUser.email:"Not logged in";
+ document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
+ document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
+ document.getElementById("profilePanel").classList.toggle("hidden",!currentUser);
+ document.getElementById("notificationsPanel").classList.toggle("hidden",!currentUser);
+ document.getElementById("chatPanel").classList.toggle("hidden",!currentUser);
+
+ if(!currentUser){
+  document.getElementById("unreadBadge").textContent="0";
+  document.getElementById("unreadBadge").classList.add("hidden");
+  document.getElementById("notificationCount").textContent="Your notifications";
+  document.getElementById("notificationsList").textContent="Please login to view notifications.";
+  document.getElementById("conversationList").textContent="Please login to use Inbox.";
+  document.getElementById("chatBox").classList.add("hidden");
+ }
+}
+
+async function updateUser(){
+ const {data,error}=await db.auth.getUser();
+ if(error){
+  currentUser=null;
+  isAdmin=false;
+  updateUI();
+  msg("Authentication error: "+error.message);
+  return;
+ }
+ currentUser=data.user||null;
+ isAdmin=false;
+
+ if(currentUser){
+  const {data:adminData,error:adminError}=await db.from("nb_admins").select("user_id").eq("user_id",currentUser.id).maybeSingle();
+  if(!adminError&&adminData)isAdmin=true;
+ }
+
+ updateUI();
+
+ if(currentUser){
+  await loadProfile();
+  await loadNotifications();
+  await loadConversations();
+ }
+
+ await loadRequests();
+
+ if(isAdmin){
+  await loadReports();
+  await loadDashboardStats();
+  await loadUsers();
+ }
+}
+
+/* PROFILE */
+
+async function loadProfile(){
+ if(!currentUser)return;
+ document.getElementById("profileEmail").textContent=currentUser.email||"";
+ const nameInput=document.getElementById("profileName");
+ const photo=document.getElementById("profilePhoto");
+ nameInput.value="";
+
+ const {data,error}=await db.from("nb_profiles").select("full_name, avatar_url").eq("id",currentUser.id).maybeSingle();
+
+ if(error){msg("Profile loading error: "+error.message);return;}
+
+ if(data){
+  nameInput.value=data.full_name||"";
+  if(data.avatar_url){
+   photo.src=data.avatar_url;
+   photo.classList.remove("hidden");
+  }else{
+   photo.removeAttribute("src");
+   photo.classList.add("hidden");
+  }
+ }
+}
+
+async function saveProfile(){
+ if(!currentUser){msg("Please login first.");return;}
+ const fullName=document.getElementById("profileName").value.trim();
+ if(!fullName){msg("Please enter your full name.");return;}
+
+ const {data,error}=await db.from("nb_profiles").update({full_name:fullName}).eq("id",currentUser.id).select("id");
+
+ if(error){msg("Profile save error: "+error.message);return;}
+ if(!data||data.length===0){msg("Profile was not updated. Please contact support.");return;}
+
+ msg("Your profile has been saved successfully.");
+}
+
+async function uploadProfilePhoto(){
+ if(!currentUser){msg("Please login first.");return;}
+ const input=document.getElementById("photoFile");
+ const file=input.files[0];
+
+ if(!file){msg("Please choose a photo first.");return;}
+ if(!file.type.startsWith("image/")){msg("Please select an image file.");return;}
+ if(file.size>5*1024*1024){msg("Image must be smaller than 5 MB.");return;}
+
+ const extensions={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"};
+ const extension=extensions[file.type];
+ if(!extension){msg("Please use JPG, PNG, WEBP or GIF.");return;}
+
+ msg("Uploading photo...");
+ const path=currentUser.id+"/"+Date.now()+"."+extension;
+
+ const {error:uploadError}=await db.storage.from("profile-photos").upload(path,file,{contentType:file.type,upsert:false});
+ if(uploadError){msg("Photo upload error: "+uploadError.message);return;}
+
+ const {data:urlData}=db.storage.from("profile-photos").getPublicUrl(path);
+
+ const {error:updateError}=await db.from("nb_profiles").update({avatar_url:urlData.publicUrl}).eq("id",currentUser.id);
+ if(updateError){msg("Photo uploaded but profile update failed: "+updateError.message);return;}
+
+ const photo=document.getElementById("profilePhoto");
+ photo.src=urlData.publicUrl;
+ photo.classList.remove("hidden");
+ input.value="";
+ msg("Profile photo uploaded successfully!");
+}
+
+/* NOTIFICATIONS */
+
+async function loadNotifications(){
+ if(!currentUser)return;
+ const box=document.getElementById("notificationsList");
+ box.textContent="Loading notifications...";
+
+ const {data,error}=await db.from("nb_notifications").select("id,title,message,is_read,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent="Notifications error: "+error.message;
+  msg("Notifications error: "+error.message);
+  return;
+ }
+
+ const notifications=data||[];
+ const unread=notifications.filter(n=>!n.is_read).length;
+
+ document.getElementById("notificationCount").textContent="Total: "+notifications.length+" | Unread: "+unread;
+
+ const badge=document.getElementById("unreadBadge");
+ badge.textContent=unread;
+ badge.classList.toggle("hidden",unread===0);
+
+ box.innerHTML="";
+
+ if(!notifications.length){
+  box.textContent="You have no notifications yet.";
+  return;
+ }
+
+ notifications.forEach(item=>{
+  const div=document.createElement("div");
+  div.className="notification"+(item.is_read?"":" unread");
+
+  const heading=document.createElement("h3");
+  heading.textContent=item.title;
+  div.appendChild(heading);
+
+  const message=document.createElement("p");
+  message.textContent=item.message;
+  div.appendChild(message);
+
+  const date=document.createElement("small");
+  date.textContent=new Date(item.created_at).toLocaleString();
+  div.appendChild(date);
+
+  const state=document.createElement("p");
+  state.textContent=item.is_read?"Read":"Unread";
+  div.appendChild(state);
+
+  if(!item.is_read){
+   const button=document.createElement("button");
+   button.className="green";
+   button.textContent="Mark as Read";
+   button.onclick=()=>markNotificationRead(item.id);
+   div.appendChild(button);
+  }
+
+  box.appendChild(div);
+ });
+}
+
+async function markNotificationRead(id){
+ if(!currentUser)return;
+ const {error}=await db.from("nb_notifications").update({is_read:true}).eq("id",id).eq("user_id",currentUser.id);
+ if(error){msg("Could not mark notification as read: "+error.message);return;}
+ msg("Notification marked as read.");
+ await loadNotifications();
+}
+
+async function markAllNotificationsRead(){
+ if(!currentUser)return;
+ const {error}=await db.from("nb_notifications").update({is_read:true}).eq("user_id",currentUser.id).eq("is_read",false);
+ if(error){msg("Could not update notifications: "+error.message);return;}
+ msg("All notifications marked as read.");
+ await loadNotifications();
+}
+    /* PROFILE PHOTOS FOR REQUESTS */
+
+async function loadProfilePhotos(posts){
+ const ids=[...new Set(posts.map(p=>p.owner_id).filter(Boolean))];
+ if(!ids.length)return {};
+
+ const {data,error}=await db.rpc("nb_get_profile_photos",{user_ids:ids});
+ if(error){console.error("Profile photos error:",error.message);return {};}
+
+ const photos={};
+ (data||[]).forEach(p=>{photos[p.id]=p.avatar_url;});
+ return photos;
+}
+
+function addRequestOwner(div,post,photos){
+ const owner=document.createElement("div");
+ owner.className="request-owner";
+ const photoUrl=photos[post.owner_id];
+
+ if(photoUrl){
+  const img=document.createElement("img");
+  img.src=photoUrl;
+  img.alt="Profile Photo";
+  img.loading="lazy";
+  owner.appendChild(img);
+ }
+
+ const label=document.createElement("span");
+ label.textContent="Help Request";
+ owner.appendChild(label);
+ div.appendChild(owner);
+}
+
+/* HELP REQUESTS */
+
+async function submitPost(){
+ if(!currentUser){msg("Please login first.");return;}
+
+ const title=document.getElementById("postTitle").value.trim();
+ const category=document.getElementById("category").value;
+ const description=document.getElementById("description").value.trim();
+ const country=document.getElementById("country").value.trim();
+ const city=document.getElementById("city").value.trim();
+
+ if(!title||!category||!description){
+  msg("Please enter a title, category and description.");
+  return;
+ }
+
+ const {error}=await db.from("nb_posts").insert({
+  owner_id:currentUser.id,
+  title:title,
+  post_type:"request",
+  status:"pending",
+  description:"Category: "+category+"\n"+description,
+  country:country,
+  city:city
+ });
+
+ if(error){msg("Request error: "+error.message);return;}
+
+ msg("Your help request has been submitted.");
+ ["postTitle","description","country","city"].forEach(id=>document.getElementById(id).value="");
+ document.getElementById("category").value="";
+ await loadRequests();
+}
+
+async function loadRequests(){
+ const posts=document.getElementById("posts");
+ const admin=document.getElementById("adminPosts");
+ posts.textContent="Loading requests...";
+ admin.innerHTML="";
+
+ const {data,error}=await db.from("nb_posts")
+ .select("id,owner_id,title,post_type,status,description,country,city,created_at")
+ .order("created_at",{ascending:false});
+
+ if(error){posts.textContent="Error: "+error.message;return;}
+
+ const allPosts=data||[];
+ const requests=allPosts.filter(p=>p.post_type==="request");
+ const photos=await loadProfilePhotos(requests);
+
+ if(isAdmin){
+  document.getElementById("totalRequests").textContent=requests.length;
+  document.getElementById("pendingRequests").textContent=requests.filter(p=>p.status==="pending").length;
+  document.getElementById("approvedRequests").textContent=requests.filter(p=>p.status==="approved").length;
+  document.getElementById("rejectedRequests").textContent=requests.filter(p=>p.status==="rejected").length;
+ }
+
+ posts.innerHTML="";
+
+ if(!allPosts.length){
+  posts.textContent="No requests found.";
+  return;
+ }
+
+ allPosts.forEach(post=>{
+  const div=document.createElement("div");
+  div.className="post";
+  addRequestOwner(div,post,photos);
+
+  const heading=document.createElement("h3");
+  heading.textContent=post.title||"Help Request";
+  div.appendChild(heading);
+
+  const description=document.createElement("p");
+  description.textContent=post.description||"";
+  div.appendChild(description);
+
+  const location=document.createElement("p");
+  location.textContent=(post.city||"")+" "+(post.country||"");
+  div.appendChild(location);
+
+  const status=document.createElement("p");
+  status.className="status";
+  status.textContent="Status: "+(post.status||"");
+  div.appendChild(status);
+
+  if(currentUser&&post.owner_id!==currentUser.id&&post.status==="approved"){
+   const reportButton=document.createElement("button");
+   reportButton.className="danger";
+   reportButton.textContent="Report";
+   reportButton.onclick=()=>reportPost(post.id);
+   div.appendChild(reportButton);
+
+   const chatButton=document.createElement("button");
+   chatButton.textContent="Message about this request";
+   chatButton.onclick=()=>startConversation(post);
+   div.appendChild(chatButton);
+  }
+
+  posts.appendChild(div);
+
+  if(isAdmin&&post.post_type==="request"&&post.status==="pending"){
+   const adminDiv=document.createElement("div");
+   adminDiv.className="post";
+   addRequestOwner(adminDiv,post,photos);
+
+   const adminHeading=document.createElement("h3");
+   adminHeading.textContent=post.title||"Help Request";
+   adminDiv.appendChild(adminHeading);
+
+   const adminDescription=document.createElement("p");
+   adminDescription.textContent=post.description||"";
+   adminDiv.appendChild(adminDescription);
+
+   const approveButton=document.createElement("button");
+   approveButton.className="green";
+   approveButton.textContent="Approve";
+   approveButton.onclick=()=>changePostStatus(post.id,"approved");
+
+   const rejectButton=document.createElement("button");
+   rejectButton.className="danger";
+   rejectButton.textContent="Reject";
+   rejectButton.onclick=()=>changePostStatus(post.id,"rejected");
+
+   adminDiv.append(approveButton,rejectButton);
+   admin.appendChild(adminDiv);
+  }
+ });
+}
+
+async function changePostStatus(id,status){
+ if(!isAdmin){msg("Administrator access required.");return;}
+
+ const {error}=await db.from("nb_posts").update({status}).eq("id",id);
+ if(error){msg("Update error: "+error.message);return;}
+
+ msg("Request status changed to: "+status);
+ await loadRequests();
+}
+
+async function loadDashboardStats(){
+ if(!isAdmin)return;
+
+ const {data,error}=await db.rpc("nb_admin_dashboard_stats");
+ if(error){msg("Dashboard stats error: "+error.message);return;}
+ if(!data||!data.length){msg("Admin statistics are unavailable.");return;}
+
+ const stats=data[0];
+ document.getElementById("totalUsers").textContent=stats.total_users;
+ document.getElementById("totalCategories").textContent=stats.total_categories;
+ document.getElementById("activeUsers").textContent=stats.active_users;
+}
+
+/* REPORTS */
+
+async function reportPost(postId){
+ if(!currentUser){msg("Please login first.");return;}
+
+ const reason=prompt("Please enter the reason for this report:");
+ if(!reason||!reason.trim())return;
+
+ const {error}=await db.from("nb_reports").insert({
+  reporter_id:currentUser.id,
+  post_id:postId,
+  reason:reason.trim()
+ });
+
+ if(error){msg("Report error: "+error.message);return;}
+ msg("Report submitted successfully.");
+}
+
+async function loadReports(){
+ if(!isAdmin)return;
+
+ const box=document.getElementById("reportList");
+ box.textContent="Loading reports...";
+
+ const {data,error}=await db.from("nb_reports")
+ .select("id,post_id,reporter_id,reason,status,created_at")
+ .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent="Reports error: "+error.message;
+  msg("Reports error: "+error.message);
+  return;
+ }
+
+ const reports=data||[];
+
+ document.getElementById("totalReports").textContent=reports.length;
+ document.getElementById("pendingReports").textContent=reports.filter(r=>!r.status||r.status==="pending").length;
+ document.getElementById("reviewedReports").textContent=reports.filter(r=>r.status==="reviewed").length;
+ document.getElementById("dismissedReports").textContent=reports.filter(r=>r.status==="dismissed").length;
+
+ const postIds=[...new Set(reports.map(r=>r.post_id).filter(Boolean))];
+ let postMap={};
+
+ if(postIds.length){
+  const {data:postData,error:postError}=await db.from("nb_posts")
+  .select("id,title,description,status,country,city")
+  .in("id",postIds);
+
+  if(postError)console.error("Reported posts loading error:",postError.message);
+  else (postData||[]).forEach(p=>{postMap[p.id]=p;});
+ }
+
+ const filter=document.getElementById("reportFilter").value;
+ const filtered=filter==="all"?reports:reports.filter(r=>(r.status||"pending")===filter);
+
+ box.innerHTML="";
+
+ if(!filtered.length){
+  box.textContent="No reports found for this filter.";
+  return;
+ }
+
+ filtered.forEach(report=>{
+  const div=document.createElement("div");
+  const status=report.status||"pending";
+  div.className="post report-card "+status;
+
+  const heading=document.createElement("h3");
+  heading.textContent="Report";
+  div.appendChild(heading);
+
+  const reason=document.createElement("p");
+  reason.textContent=report.reason||"";
+  div.appendChild(reason);
+
+  const post=postMap[report.post_id];
+  if(post){
+   const details=document.createElement("div");
+   details.className="report-details";
+   details.textContent="Reported request: "+post.title+"\n"+post.description;
+   div.appendChild(details);
+  }
+
+  const badge=document.createElement("p");
+  badge.className="report-status "+status;
+  badge.textContent="Status: "+status;
+  div.appendChild(badge);
+
+  if(status==="pending"){
+   const review=document.createElement("button");
+   review.className="green";
+   review.textContent="Mark Reviewed";
+   review.onclick=()=>changeReportStatus(report.id,"reviewed");
+
+   const dismiss=document.createElement("button");
+   dismiss.className="danger";
+   dismiss.textContent="Dismiss";
+   dismiss.onclick=()=>changeReportStatus(report.id,"dismissed");
+
+   div.append(review,dismiss);
+  }
+
+  box.appendChild(div);
+ });
+}
+
+async function changeReportStatus(id,status){
+ if(!isAdmin){msg("Administrator access required.");return;}
+
+ const {error}=await db.from("nb_reports").update({status}).eq("id",id);
+ if(error){msg("Report update error: "+error.message);return;}
+
+ msg("Report status updated.");
+ await loadReports();
+}
 <footer>NeedBridge — Free Help for Everyone</footer>
+    /* ADMIN USER MANAGEMENT */
 
-<!-- PART 2 WILL CONTINUE HERE -->
-  <script>
-/* ===============================
-   PART 2: SUPABASE + AUTH + PROFILE
-================================ */
+async function loadUsers(){
+ if(!isAdmin)return;
+ const box=document.getElementById("usersList");
+ box.textContent="Loading users...";
 
-const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
-const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
+ const {data,error}=await db.from("nb_profiles")
+ .select("id,full_name,created_at")
+ .order("created_at",{ascending:false});
 
-let db = null;
-let currentUser = null;
-let currentProfile = null;
+ if(error){box.textContent="Users error: "+error.message;return;}
 
-const $ = id => document.getElementById(id);
-
-function showMessage(message, error = false) {
-  const box = $("message");
-  if (!box) return;
-  box.textContent = message;
-  box.style.display = "block";
-  box.style.padding = "12px";
-  box.style.margin = "12px 0";
-  box.style.borderRadius = "8px";
-  box.style.background = error ? "#fee2e2" : "#dcfce7";
-  box.style.color = error ? "#991b1b" : "#166534";
+ box.innerHTML="";
+ (data||[]).forEach(user=>{
+  const div=document.createElement("div");
+  div.className="post";
+  div.textContent=user.full_name||"Registered User";
+  box.appendChild(div);
+ });
 }
 
-function showError(error) {
-  console.error(error);
-  showMessage(error?.message || "Something went wrong.", true);
+/* CHAT */
+
+async function startConversation(post){
+ if(!currentUser){msg("Please login first.");return;}
+
+ const requester=currentUser.id;
+ const helper=post.owner_id;
+
+ const {data:existing,error:findError}=await db.from("conversations")
+ .select("id")
+ .eq("listing_id",post.id)
+ .or("and(requester_id.eq."+requester+",helper_id.eq."+helper+"),and(requester_id.eq."+helper+",helper_id.eq."+requester+")")
+ .maybeSingle();
+
+ if(findError){msg("Conversation error: "+findError.message);return;}
+
+ let conversation=existing;
+
+ if(!conversation){
+  const {data,error}=await db.from("conversations")
+  .insert({
+   listing_id:post.id,
+   requester_id:requester,
+   helper_id:helper
+  })
+  .select("id")
+  .single();
+
+  if(error){msg("Could not start conversation: "+error.message);return;}
+  conversation=data;
+ }
+
+ await loadConversations();
+ await openConversation(conversation.id);
 }
 
-function requireDatabase() {
-  if (!db) throw new Error("Supabase connection is not ready. Refresh the page.");
+async function loadConversations(){
+ if(!currentUser)return;
+
+ const box=document.getElementById("conversationList");
+ box.textContent="Loading conversations...";
+
+ const {data,error}=await db.from("conversations")
+ .select("id,listing_id,requester_id,helper_id,created_at")
+ .or("requester_id.eq."+currentUser.id+",helper_id.eq."+currentUser.id)
+ .order("created_at",{ascending:false});
+
+ if(error){box.textContent="Inbox error: "+error.message;return;}
+
+ box.innerHTML="";
+ if(!data||!data.length){
+  box.textContent="No conversations yet.";
+  return;
+ }
+
+ data.forEach(item=>{
+  const button=document.createElement("button");
+  button.textContent="Open Conversation";
+  button.onclick=()=>openConversation(item.id);
+  box.appendChild(button);
+ });
 }
 
-async function initializeApp() {
-  try {
-    if (!window.supabase) {
-      throw new Error("Supabase library did not load. Check your internet connection.");
-    }
+async function openConversation(id){
+ if(chatChannel){
+  await db.removeChannel(chatChannel);
+  chatChannel=null;
+ }
 
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+ activeConversation=id;
+ document.getElementById("chatBox").classList.remove("hidden");
 
-    const { data, error } = await db.auth.getSession();
-    if (error) throw error;
+ await loadChatMessages();
 
-    currentUser = data.session?.user || null;
-
-    if (currentUser) {
-      await loadProfile();
-      await loadPosts();
-      await loadNotifications();
-      showUserPanels();
-    } else {
-      showMessage("NeedBridge is ready. Please login or sign up.");
-    }
-  } catch (error) {
-    showError(error);
+ chatChannel=db.channel("chat-"+id)
+ .on("postgres_changes",{
+  event:"INSERT",
+  schema:"public",
+  table:"messages",
+  filter:"conversation_id=eq."+id
+ },payload=>{
+  if(payload.new.sender_id!==currentUser.id){
+   loadChatMessages();
   }
+ })
+ .subscribe();
 }
 
-async function signUp() {
-  try {
-    requireDatabase();
+async function loadChatMessages(){
+ if(!activeConversation)return;
 
-    const email = $("email")?.value.trim();
-    const password = $("password")?.value;
+ const box=document.getElementById("chatMessages");
+ box.textContent="Loading messages...";
 
-    if (!email || !password) {
-      return showMessage("Enter your email and password.", true);
-    }
+ const {data,error}=await db.from("messages")
+ .select("id,conversation_id,sender_id,body,created_at")
+ .eq("conversation_id",activeConversation)
+ .order("created_at",{ascending:true});
 
-    if (password.length < 6) {
-      return showMessage("Password must be at least 6 characters.", true);
-    }
+ if(error){box.textContent="Messages error: "+error.message;return;}
 
-    const { data, error } = await db.auth.signUp({
-      email,
-      password
-    });
+ box.innerHTML="";
 
-    if (error) throw error;
+ for(const item of (data||[])){
+  const div=document.createElement("div");
+  div.className="chat-message"+(item.sender_id===currentUser.id?" mine":"");
 
-    if (data.user && !data.session) {
-      showMessage("Account created. Check your email to confirm your account.");
-      return;
-    }
+  if(item.body.startsWith("IMAGE:")||item.body.startsWith("VOICE:")){
+   const isImage=item.body.startsWith("IMAGE:");
+   const path=item.body.substring(item.body.indexOf(":")+1);
 
-    currentUser = data.user;
-    await createProfile();
-    await loadProfile();
-    showUserPanels();
-    showMessage("Account created successfully!");
-  } catch (error) {
-    showError(error);
-  }
-}
+   const {data:urlData,error:urlError}=await db.storage
+   .from("chat-media").createSignedUrl(path,3600);
 
-async function login() {
-  try {
-    requireDatabase();
-
-    const email = $("email")?.value.trim();
-    const password = $("password")?.value;
-
-    if (!email || !password) {
-      return showMessage("Enter your email and password.", true);
-    }
-
-    const { data, error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) throw error;
-
-    currentUser = data.user;
-    await createProfile();
-    await loadProfile();
-    await loadPosts();
-    await loadNotifications();
-    showUserPanels();
-
-    showMessage("Login successful!");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function logout() {
-  try {
-    requireDatabase();
-
-    const { error } = await db.auth.signOut();
-    if (error) throw error;
-
-    currentUser = null;
-    currentProfile = null;
-
-    [
-      "profilePanel",
-      "notificationsPanel",
-      "chatPanel",
-      "adminPanel",
-      "reportsPanel"
-    ].forEach(id => {
-      if ($(id)) $(id).style.display = "none";
-    });
-
-    showMessage("You have logged out.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function createProfile() {
-  if (!currentUser) return;
-
-  const { error } = await db
-    .from("nb_profiles")
-    .upsert({
-      id: currentUser.id,
-      full_name: currentUser.email?.split("@")[0] || "User"
-    }, { onConflict: "id", ignoreDuplicates: true });
-
-  if (error) throw error;
-}
-
-async function loadProfile() {
-  if (!currentUser) return;
-
-  const { data, error } = await db
-    .from("nb_profiles")
-    .select("*")
-    .eq("id", currentUser.id)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  currentProfile = data;
-
-  if ($("profileEmail")) {
-    $("profileEmail").textContent = currentUser.email || "";
+   if(urlError){
+    div.textContent="Media unavailable";
+   }else if(isImage){
+    const img=document.createElement("img");
+    img.src=urlData.signedUrl;
+    img.alt="Chat image";
+    div.appendChild(img);
+   }else{
+    const audio=document.createElement("audio");
+    audio.controls=true;
+    audio.src=urlData.signedUrl;
+    div.appendChild(audio);
+   }
+  }else{
+   div.textContent=item.body;
   }
 
-  if ($("profileName")) {
-    $("profileName").value = data?.full_name || "";
-  }
+  const date=document.createElement("small");
+  date.textContent=new Date(item.created_at).toLocaleString();
+  div.appendChild(date);
 
-  if ($("profilePhoto") && data?.avatar_url) {
-    $("profilePhoto").src = data.avatar_url;
-  }
+  box.appendChild(div);
+ }
+
+ box.scrollTop=box.scrollHeight;
 }
 
-function showUserPanels() {
-  if ($("profilePanel")) $("profilePanel").style.display = "block";
-  if ($("notificationsPanel")) $("notificationsPanel").style.display = "block";
-  if ($("chatPanel")) $("chatPanel").style.display = "block";
+async function sendChatMessage(){
+ if(!currentUser||!activeConversation){
+  msg("Open a conversation first.");
+  return;
+ }
+
+ const input=document.getElementById("chatText");
+ const body=input.value.trim();
+ if(!body)return;
+
+ const {error}=await db.from("messages").insert({
+  conversation_id:activeConversation,
+  sender_id:currentUser.id,
+  body:body
+ });
+
+ if(error){msg("Message error: "+error.message);return;}
+
+ input.value="";
+ await loadChatMessages();
 }
 
-async function saveProfile() {
-  try {
-    requireDatabase();
-    if (!currentUser) throw new Error("Please login first.");
+async function sendChatFile(inputId,type){
+ if(!currentUser||!activeConversation){
+  msg("Open a conversation first.");
+  return;
+ }
 
-    const fullName = $("profileName")?.value.trim();
-    if (!fullName) throw new Error("Enter your name.");
+ const input=document.getElementById(inputId);
+ const file=input.files[0];
+ if(!file){msg("Please choose a file.");return;}
 
-    const { error } = await db
-      .from("nb_profiles")
-      .upsert({
-        id: currentUser.id,
-        full_name: fullName
-      }, { onConflict: "id" });
+ if(file.size>10*1024*1024){
+  msg("File must be smaller than 10 MB.");
+  return;
+ }
 
-    if (error) throw error;
+ msg("Uploading file...");
 
-    showMessage("Profile updated successfully.");
-    await loadProfile();
-  } catch (error) {
-    showError(error);
-  }
+ const extension=(file.name.split(".").pop()||"file").replace(/[^a-zA-Z0-9]/g,"");
+ const path=activeConversation+"/"+currentUser.id+"/"+Date.now()+"."+extension;
+
+ const {error:uploadError}=await db.storage.from("chat-media")
+ .upload(path,file,{contentType:file.type,upsert:false});
+
+ if(uploadError){msg("Upload error: "+uploadError.message);return;}
+
+ const {error}=await db.from("messages").insert({
+  conversation_id:activeConversation,
+  sender_id:currentUser.id,
+  body:type+":"+path
+ });
+
+ if(error){msg("Message error: "+error.message);return;}
+
+ input.value="";
+ msg("File sent successfully.");
+ await loadChatMessages();
 }
 
-async function uploadProfilePhoto() {
-  try {
-    requireDatabase();
-    if (!currentUser) throw new Error("Please login first.");
-
-    const file = $("photoFile")?.files?.[0];
-    if (!file) throw new Error("Choose a photo first.");
-
-    if (!file.type.startsWith("image/")) {
-      throw new Error("Please choose an image file.");
-    }
-
-    const path = currentUser.id + "/" + Date.now() + "_" + file.name;
-
-    const { error: uploadError } = await db.storage
-      .from("profile-photos")
-      .upload(path, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = db.storage
-      .from("profile-photos")
-      .getPublicUrl(path);
-
-    const { error } = await db
-      .from("nb_profiles")
-      .upsert({
-        id: currentUser.id,
-        avatar_url: data.publicUrl
-      }, { onConflict: "id" });
-
-    if (error) throw error;
-
-    await loadProfile();
-    showMessage("Profile photo updated.");
-  } catch (error) {
-    showError(error);
-  }
+async function sendChatImage(){
+ await sendChatFile("chatImage","IMAGE");
 }
 
-/* ===============================
-   HELP REQUESTS
-================================ */
-
-async function loadPosts() {
-  try {
-    requireDatabase();
-
-    const { data, error } = await db
-      .from("nb_posts")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    const area = $("posts");
-    if (!area) return;
-
-    area.innerHTML = "";
-
-    (data || []).forEach(post => {
-      const card = document.createElement("article");
-      card.className = "post";
-
-      const title = document.createElement("h3");
-      title.textContent = post.title || "Help request";
-
-      const description = document.createElement("p");
-      description.textContent = post.description || "";
-
-      const location = document.createElement("p");
-      location.textContent =
-        [post.city, post.country].filter(Boolean).join(", ");
-
-      card.append(title, description, location);
-      area.appendChild(card);
-    });
-  } catch (error) {
-    showError(error);
-  }
+async function sendChatVoice(){
+ await sendChatFile("chatVoice","VOICE");
 }
 
-async function createPost() {
-  try {
-    requireDatabase();
-    if (!currentUser) throw new Error("Please login first.");
+/* START APP */
 
-    const title = $("postTitle")?.value.trim();
-    const category = $("category")?.value;
-    const description = $("description")?.value.trim();
-    const country = $("country")?.value.trim();
-    const city = $("city")?.value.trim();
-
-    if (!title || !description) {
-      throw new Error("Enter the title and description.");
-    }
-
-    const { error } = await db
-      .from("nb_posts")
-      .insert({
-        owner_id: currentUser.id,
-        title,
-        post_type: category || "help",
-        status: "pending",
-        description,
-        country,
-        city
-      });
-
-    if (error) throw error;
-
-    if ($("postTitle")) $("postTitle").value = "";
-    if ($("description")) $("description").value = "";
-
-    await loadPosts();
-    showMessage("Your help request has been submitted.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-</script>
-
-<!-- PART 3 WILL CONTINUE HERE -->
-  <script>
-/* ===============================
-   PART 3: NOTIFICATIONS + CHAT
-================================ */
-
-let activeConversationId = null;
-let chatRefreshTimer = null;
-
-/* ---------- NOTIFICATIONS ---------- */
-
-async function loadNotifications() {
-  try {
-    if (!currentUser || !db) return;
-
-    const { data, error } = await db
-      .from("nb_notifications")
-      .select("*")
-      .eq("user_id", currentUser.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (error) throw error;
-
-    const list = $("notificationsList");
-    if (!list) return;
-
-    list.innerHTML = "";
-
-    const unread = (data || []).filter(n => !n.is_read).length;
-
-    if ($("unreadBadge")) {
-      $("unreadBadge").textContent = unread;
-    }
-
-    if ($("notificationCount")) {
-      $("notificationCount").textContent = unread;
-    }
-
-    (data || []).forEach(item => {
-      const box = document.createElement("div");
-      box.className = "post";
-
-      const title = document.createElement("strong");
-      title.textContent = item.title || "Notification";
-
-      const message = document.createElement("p");
-      message.textContent = item.message || "";
-
-      box.append(title, message);
-
-      if (!item.is_read) {
-        const btn = document.createElement("button");
-        btn.textContent = "Mark as read";
-        btn.onclick = () => markNotificationRead(item.id);
-        box.appendChild(btn);
-      }
-
-      list.appendChild(box);
-    });
-
-    if (!data || data.length === 0) {
-      list.textContent = "No notifications yet.";
-    }
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function markNotificationRead(id) {
-  try {
-    const { error } = await db
-      .from("nb_notifications")
-      .update({ is_read: true })
-      .eq("id", id)
-      .eq("user_id", currentUser.id);
-
-    if (error) throw error;
-
-    await loadNotifications();
-  } catch (error) {
-    showError(error);
-  }
-}
-
-/* ---------- CONVERSATIONS ---------- */
-
-async function loadConversations() {
-  try {
-    if (!currentUser || !db) return;
-
-    const { data, error } = await db
-      .from("conversations")
-      .select("*")
-      .or(
-        `requester_id.eq.${currentUser.id},helper_id.eq.${currentUser.id}`
-      )
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    const area = $("conversationList");
-    if (!area) return;
-
-    area.innerHTML = "";
-
-    (data || []).forEach(conversation => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = "Conversation " +
-        String(conversation.id).slice(0, 8);
-
-      button.style.display = "block";
-      button.style.margin = "8px 0";
-
-      button.onclick = () => {
-        openConversation(conversation.id);
-      };
-
-      area.appendChild(button);
-    });
-
-    if (!data || data.length === 0) {
-      area.textContent = "No conversations yet.";
-    }
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function openConversation(id) {
-  try {
-    if (!currentUser) throw new Error("Please login first.");
-
-    activeConversationId = id;
-
-    await loadChatMessages();
-
-    if (chatRefreshTimer) {
-      clearInterval(chatRefreshTimer);
-    }
-
-    chatRefreshTimer = setInterval(() => {
-      if (activeConversationId) loadChatMessages();
-    }, 7000);
-  } catch (error) {
-    showError(error);
-  }
-}
-
-/* ---------- CHAT MESSAGES ---------- */
-
-async function loadChatMessages() {
-  try {
-    if (!activeConversationId || !currentUser) return;
-
-    const { data, error } = await db
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", activeConversationId)
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
-
-    const area = $("chatMessages");
-    if (!area) return;
-
-    area.innerHTML = "";
-
-    for (const message of (data || [])) {
-      const item = document.createElement("div");
-      item.className = "post";
-
-      const sender = document.createElement("strong");
-      sender.textContent =
-        message.sender_id === currentUser.id ? "You" : "Other user";
-
-      const body = document.createElement("p");
-      body.textContent = message.body || "";
-
-      item.append(sender, body);
-
-      if (
-        message.body &&
-        (message.body.startsWith("NBMEDIA:") ||
-         message.body.startsWith("NBVOICE:"))
-      ) {
-        const isVoice = message.body.startsWith("NBVOICE:");
-        const path = message.body.substring(8);
-
-        const { data: signed, error: signedError } = await db.storage
-          .from("chat-media")
-          .createSignedUrl(path, 3600);
-
-        if (!signedError && signed?.signedUrl) {
-          if (isVoice) {
-            const audio = document.createElement("audio");
-            audio.controls = true;
-            audio.src = signed.signedUrl;
-            item.appendChild(audio);
-          } else {
-            const image = document.createElement("img");
-            image.src = signed.signedUrl;
-            image.alt = "Chat image";
-            image.style.maxWidth = "220px";
-            image.style.display = "block";
-            item.appendChild(image);
-          }
-        }
-      }
-
-      area.appendChild(item);
-    }
-
-    area.scrollTop = area.scrollHeight;
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function sendMessage() {
-  try {
-    if (!currentUser) throw new Error("Please login first.");
-    if (!activeConversationId) {
-      throw new Error("Please open a conversation first.");
-    }
-
-    const input = $("chatText");
-    const body = input?.value.trim();
-
-    if (!body) throw new Error("Write a message first.");
-
-    const { error } = await db
-      .from("messages")
-      .insert({
-        conversation_id: activeConversationId,
-        sender_id: currentUser.id,
-        body
-      });
-
-    if (error) throw error;
-
-    input.value = "";
-    await loadChatMessages();
-    showMessage("Message sent.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-/* ---------- CHAT IMAGE / VOICE ---------- */
-
-async function uploadChatMedia(file, voice = false) {
-  try {
-    if (!currentUser) throw new Error("Please login first.");
-    if (!activeConversationId) {
-      throw new Error("Open a conversation first.");
-    }
-    if (!file) throw new Error("Choose a file first.");
-
-    const path =
-      activeConversationId + "/" +
-      currentUser.id + "/" +
-      Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-
-    const { error: uploadError } = await db.storage
-      .from("chat-media")
-      .upload(path, file);
-
-    if (uploadError) throw uploadError;
-
-    const { error } = await db
-      .from("messages")
-      .insert({
-        conversation_id: activeConversationId,
-        sender_id: currentUser.id,
-        body: (voice ? "NBVOICE:" : "NBMEDIA:") + path
-      });
-
-    if (error) throw error;
-
-    await loadChatMessages();
-    showMessage(voice ? "Voice message sent." : "Image sent.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function sendChatImage() {
-  const file = $("chatImage")?.files?.[0];
-
-  if (!file || !file.type.startsWith("image/")) {
-    return showMessage("Choose a valid image.", true);
-  }
-
-  await uploadChatMedia(file, false);
-}
-
-async function sendChatVoice() {
-  const file = $("chatVoice")?.files?.[0];
-
-  if (!file) {
-    return showMessage("Choose a voice recording first.", true);
-  }
-
-  await uploadChatMedia(file, true);
-}
-
-/* ---------- CREATE CONVERSATION ---------- */
-
-async function startConversation(postId, ownerId) {
-  try {
-    if (!currentUser) throw new Error("Please login first.");
-
-    if (!postId || !ownerId) {
-      throw new Error("Post information is missing.");
-    }
-
-    if (ownerId === currentUser.id) {
-      throw new Error("You cannot start a conversation with yourself.");
-    }
-
-    const { data: existing, error: findError } = await db
-      .from("conversations")
-      .select("*")
-      .eq("listing_id", postId)
-      .eq("requester_id", currentUser.id)
-      .eq("helper_id", ownerId)
-      .maybeSingle();
-
-    if (findError) throw findError;
-
-    if (existing) {
-      await loadConversations();
-      await openConversation(existing.id);
-      return;
-    }
-
-    const { data, error } = await db
-      .from("conversations")
-      .insert({
-        listing_id: postId,
-        requester_id: currentUser.id,
-        helper_id: ownerId
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    await loadConversations();
-    await openConversation(data.id);
-
-    showMessage("Conversation started.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-</script>
-
-<!-- PART 4 WILL CONTINUE HERE -->
-  <script>
-/* ===============================
-   PART 4: ADMIN + REPORTS + EVENTS
-================================ */
-
-/* ---------- ADMIN ---------- */
-
-async function checkAdmin() {
-  try {
-    if (!currentUser) return false;
-
-    const { data, error } = await db
-      .from("nb_admins")
-      .select("user_id")
-      .eq("user_id", currentUser.id)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    const isAdmin = !!data;
-
-    if ($("adminPanel")) {
-      $("adminPanel").style.display = isAdmin ? "block" : "none";
-    }
-
-    if ($("reportsPanel")) {
-      $("reportsPanel").style.display = isAdmin ? "block" : "none";
-    }
-
-    if (isAdmin) {
-      await loadAdminDashboard();
-      await loadAdminUsers();
-      await loadReports();
-    }
-
-    return isAdmin;
-  } catch (error) {
-    showError(error);
-    return false;
-  }
-}
-
-async function loadAdminDashboard() {
-  try {
-    const { data: posts, error } = await db
-      .from("nb_posts")
-      .select("id,status");
-
-    if (error) throw error;
-
-    const all = posts || [];
-
-    if ($("totalRequests")) $("totalRequests").textContent = all.length;
-    if ($("pendingRequests")) {
-      $("pendingRequests").textContent =
-        all.filter(p => p.status === "pending").length;
-    }
-    if ($("approvedRequests")) {
-      $("approvedRequests").textContent =
-        all.filter(p => p.status === "approved").length;
-    }
-    if ($("rejectedRequests")) {
-      $("rejectedRequests").textContent =
-        all.filter(p => p.status === "rejected").length;
-    }
-
-    const { data: stats, error: statsError } =
-      await db.rpc("nb_admin_dashboard_stats");
-
-    if (!statsError && stats) {
-      const result = Array.isArray(stats) ? stats[0] : stats;
-
-      if ($("totalUsers")) {
-        $("totalUsers").textContent = result.total_users ?? 0;
-      }
-      if ($("totalCategories")) {
-        $("totalCategories").textContent = result.total_categories ?? 0;
-      }
-      if ($("activeUsers")) {
-        $("activeUsers").textContent = result.active_users ?? 0;
-      }
-    }
-
-    const area = $("adminPosts");
-    if (area) {
-      area.innerHTML = "";
-
-      all.forEach(post => {
-        const item = document.createElement("div");
-        item.className = "post";
-        item.textContent = post.id + " — " + post.status;
-        area.appendChild(item);
-      });
-    }
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function updatePostStatus(postId, status) {
-  try {
-    if (!currentUser) throw new Error("Admin login required.");
-
-    const { error } = await db
-      .from("nb_posts")
-      .update({ status })
-      .eq("id", postId);
-
-    if (error) throw error;
-
-    await loadPosts();
-    await loadAdminDashboard();
-
-    showMessage("Request status updated.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function loadAdminUsers() {
-  try {
-    const area = $("usersList");
-    if (!area) return;
-
-    const response = await fetch(
-      SUPABASE_URL + "/functions/v1/bright-action",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + (await db.auth.getSession()).data.session.access_token
-        },
-        body: JSON.stringify({ action: "list" })
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Could not load users.");
-    }
-
-    area.innerHTML = "";
-
-    (result.users || []).forEach(user => {
-      const row = document.createElement("div");
-      row.className = "post";
-
-      const email = document.createElement("p");
-      email.textContent = user.email || user.id;
-
-      const blocked = !!user.banned_until;
-
-      const button = document.createElement("button");
-      button.textContent = blocked ? "Unblock" : "Block";
-      button.onclick = () => setUserBlocked(user.id, !blocked);
-
-      row.append(email, button);
-      area.appendChild(row);
-    });
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function setUserBlocked(userId, blocked) {
-  try {
-    const sessionResult = await db.auth.getSession();
-    const token = sessionResult.data.session?.access_token;
-
-    if (!token) throw new Error("Please login again.");
-
-    const response = await fetch(
-      SUPABASE_URL + "/functions/v1/bright-action",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + token
-        },
-        body: JSON.stringify({
-          action: "set_block",
-          user_id: userId,
-          blocked
-        })
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Could not update user.");
-    }
-
-    await loadAdminUsers();
-    showMessage(blocked ? "User blocked." : "User unblocked.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-/* ---------- REPORTS ---------- */
-
-async function loadReports() {
-  try {
-    const { data, error } = await db
-      .from("nb_reports")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    const reports = data || [];
-
-    if ($("totalReports")) {
-      $("totalReports").textContent = reports.length;
-    }
-    if ($("pendingReports")) {
-      $("pendingReports").textContent =
-        reports.filter(r => r.status === "pending").length;
-    }
-    if ($("reviewedReports")) {
-      $("reviewedReports").textContent =
-        reports.filter(r => r.status === "reviewed").length;
-    }
-    if ($("dismissedReports")) {
-      $("dismissedReports").textContent =
-        reports.filter(r => r.status === "dismissed").length;
-    }
-
-    const filter = $("reportFilter")?.value || "all";
-    const area = $("reportList");
-
-    if (!area) return;
-    area.innerHTML = "";
-
-    reports
-      .filter(r => filter === "all" || r.status === filter)
-      .forEach(report => {
-        const item = document.createElement("div");
-        item.className = "post";
-
-        const details = document.createElement("p");
-        details.textContent =
-          "Report: " + report.id +
-          " | Post: " + report.post_id +
-          " | Reason: " + report.reason +
-          " | Status: " + report.status;
-
-        const reviewed = document.createElement("button");
-        reviewed.textContent = "Mark reviewed";
-        reviewed.onclick = () =>
-          updateReportStatus(report.id, "reviewed");
-
-        const dismissed = document.createElement("button");
-        dismissed.textContent = "Dismiss";
-        dismissed.onclick = () =>
-          updateReportStatus(report.id, "dismissed");
-
-        item.append(details, reviewed, dismissed);
-        area.appendChild(item);
-      });
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function updateReportStatus(id, status) {
-  try {
-    const { error } = await db
-      .from("nb_reports")
-      .update({ status })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    await loadReports();
-    showMessage("Report updated.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-async function reportPost(postId, reason) {
-  try {
-    if (!currentUser) throw new Error("Please login first.");
-
-    const { error } = await db
-      .from("nb_reports")
-      .insert({
-        reporter_id: currentUser.id,
-        post_id: postId,
-        reason: reason || "Other",
-        status: "pending"
-      });
-
-    if (error) throw error;
-
-    showMessage("Report submitted.");
-  } catch (error) {
-    showError(error);
-  }
-}
-
-/* ---------- BUTTON EVENTS ---------- */
-
-function connectButton(id, action) {
-  const button = $(id);
-  if (!button) return;
-
-  button.addEventListener("click", async event => {
-    event.preventDefault();
-
-    try {
-      await action();
-    } catch (error) {
-      showError(error);
-    }
-  });
-}
-
-function connectAppEvents() {
-  connectButton("signupBtn", signUp);
-  connectButton("loginBtn", login);
-  connectButton("logoutBtn", logout);
-  connectButton("createPostBtn", createPost);
-  connectButton("sendMessageBtn", sendMessage);
-  connectButton("sendImageBtn", sendChatImage);
-  connectButton("sendVoiceBtn", sendChatVoice);
-  connectButton("saveProfileBtn", saveProfile);
-  connectButton("uploadPhotoBtn", uploadProfilePhoto);
-
-  if ($("reportFilter")) {
-    $("reportFilter").addEventListener("change", loadReports);
-  }
-
-  if ($("chatImage")) {
-    $("chatImage").addEventListener("change", () => {
-      if ($("sendImageBtn")) $("sendImageBtn").disabled = false;
-    });
-  }
-}
-
-/* ---------- START APP ---------- */
-
-document.addEventListener("DOMContentLoaded", async () => {
-  connectAppEvents();
-
-  if (!$("message")) {
-    console.error("Message element is missing.");
-  }
-
-  await initializeApp();
-
-  if (currentUser) {
-    await loadConversations();
-    await checkAdmin();
-  }
+db.auth.onAuthStateChange(()=>{
+ setTimeout(()=>{updateUser();},0);
 });
+
+updateUser();
 
 </script>
 </body>
