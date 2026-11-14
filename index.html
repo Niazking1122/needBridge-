@@ -180,7 +180,8 @@ footer{text-align:center;padding:20px;color:#64748b}
 <div id="reportList">Loading reports...</div>
 </section>
 </main>
-  <script>
+<footer>NeedBridge — Free Help for Everyone</footer>
+<script>
 const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
 const SUPABASE_KEY="sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -432,7 +433,7 @@ async function markAllNotificationsRead(){
  msg("All notifications marked as read.");
  await loadNotifications();
 }
-    /* PROFILE PHOTOS FOR REQUESTS */
+  /* PROFILE PHOTOS FOR REQUESTS */
 
 async function loadProfilePhotos(posts){
  const ids=[...new Set(posts.map(p=>p.owner_id).filter(Boolean))];
@@ -734,8 +735,7 @@ async function changeReportStatus(id,status){
  msg("Report status updated.");
  await loadReports();
 }
-<footer>NeedBridge — Free Help for Everyone</footer>
-    /* ADMIN USER MANAGEMENT */
+  /* ADMIN USER MANAGEMENT */
 
 async function loadUsers(){
  if(!isAdmin)return;
