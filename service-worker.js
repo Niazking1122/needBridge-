@@ -1,4 +1,4 @@
-const CACHE_NAME = "needbridge-v1";
+const CACHE_NAME = "needbridge-v2";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
