@@ -1222,23 +1222,155 @@ if ("serviceWorker" in navigator) {
           stroke-width="6" stroke-linecap="round"/>
   </svg>
 
-  <div class="wb-welcome">🤗 Welcome to our family!</div>
+<style>
+#welcomeScreen {
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  color:white;
+  text-align:center;
+  font-family:Arial,sans-serif;
+  background:radial-gradient(circle at 50% 35%,#124d78,#07152f 65%,#020817);
+}
+.wb-stars {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    radial-gradient(2px 2px at 20% 25%,white 99%,transparent),
+    radial-gradient(2px 2px at 75% 20%,#7dd3fc 99%,transparent),
+    radial-gradient(3px 3px at 85% 65%,white 99%,transparent),
+    radial-gradient(2px 2px at 30% 75%,#facc15 99%,transparent),
+    radial-gradient(2px 2px at 55% 12%,white 99%,transparent);
+  background-size:180px 180px;
+  animation:starMove 12s linear infinite,starGlow 2s infinite alternate;
+}
+.wb-logo {
+  width:190px;
+  max-width:55vw;
+  z-index:1;
+  animation:logoFloat 3s ease-in-out infinite;
+  filter:drop-shadow(0 0 22px #38bdf8);
+}
+.wb-ring {
+  fill:none;
+  stroke:#facc15;
+  stroke-width:2;
+  stroke-dasharray:12 10;
+  transform-origin:100px 100px;
+  animation:ringSpin 12s linear infinite;
+}
+.wb-title {
+  z-index:1;
+  font-size:40px;
+  font-weight:900;
+  margin:12px 0;
+  background:linear-gradient(90deg,#fff,#7dd3fc,#facc15,#fff);
+  background-size:200%;
+  color:transparent;
+  background-clip:text;
+  animation:titleShine 4s linear infinite;
+}
+.wb-welcome {
+  z-index:1;
+  font-size:23px;
+  animation:textIn 1.5s ease;
+}
+.wb-tagline {
+  z-index:1;
+  color:#bae6fd;
+  font-size:14px;
+  letter-spacing:2px;
+}
+.wb-message {
+  z-index:1;
+  margin:14px;
+  font-size:16px;
+  color:#e0f2fe;
+}
+.wb-button {
+  z-index:1;
+  margin-top:24px;
+  padding:15px 32px;
+  border:0;
+  border-radius:40px;
+  color:#082f49;
+  background:linear-gradient(100deg,#fde68a,#facc15);
+  font-size:17px;
+  font-weight:bold;
+  box-shadow:0 0 25px #facc1566;
+  animation:buttonPulse 2s infinite;
+  cursor:pointer;
+}
+@keyframes logoFloat {
+  50% {transform:translateY(-13px) scale(1.05)}
+}
+@keyframes ringSpin {
+  to {transform:rotate(360deg)}
+}
+@keyframes titleShine {
+  to {background-position:200% center}
+}
+@keyframes textIn {
+  from {opacity:0;transform:translateY(20px)}
+  to {opacity:1;transform:translateY(0)}
+}
+@keyframes buttonPulse {
+  50% {transform:scale(1.05);box-shadow:0 0 35px #facc15aa}
+}
+@keyframes starMove {
+  to {background-position:180px 180px}
+}
+@keyframes starGlow {
+  to {opacity:.4}
+}
+</style>
+
+<div id="welcomeScreen">
+  <div class="wb-stars"></div>
+
+  <svg class="wb-logo" viewBox="0 0 200 200"
+       xmlns="http://www.w3.org/2000/svg">
+    <circle class="wb-ring" cx="100" cy="100" r="88"/>
+    <circle cx="100" cy="100" r="76"
+            fill="#075985" stroke="#7dd3fc" stroke-width="2"/>
+    <path d="M35 105 Q100 15 165 105"
+          fill="none" stroke="#facc15"
+          stroke-width="9" stroke-linecap="round"/>
+    <path d="M42 105 V133 M158 105 V133"
+          stroke="white" stroke-width="8"
+          stroke-linecap="round"/>
+    <path d="M38 133 Q100 158 162 133"
+          fill="none" stroke="white" stroke-width="7"/>
+    <path d="M100 65 V105"
+          stroke="white" stroke-width="6"/>
+    <circle cx="100" cy="48" r="12" fill="#facc15"/>
+    <path d="M77 111 Q100 92 123 111"
+          fill="none" stroke="#7dd3fc" stroke-width="7"/>
+  </svg>
+
+  <div class="wb-welcome">🤗 Welcome to Our Community!</div>
   <div class="wb-title">NeedBridge</div>
   <div class="wb-tagline">ASK • HELP • GROW TOGETHER</div>
   <div class="wb-message">
-    ❤️ دلته هر څوک مهم دی، هره مرسته ارزښت لري.
+    A Place Where Helping Matters ❤️
   </div>
 
   <button class="wb-button"
     onclick="document.getElementById('welcomeScreen').remove()">
-    راځه، پیل یې کړو! ❤️
+    Let's Get Started!
   </button>
 </div>
 
 <script>
 setTimeout(function(){
-  const s=document.getElementById("welcomeScreen");
-  if(s) s.remove();
+  const screen=document.getElementById("welcomeScreen");
+  if(screen) screen.remove();
 },8000);
 </script>
 </body>
