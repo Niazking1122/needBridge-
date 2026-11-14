@@ -1067,26 +1067,179 @@ if ("serviceWorker" in navigator) {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+<style>
+#welcomeScreen {
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  color:white;
+  text-align:center;
+  font-family:Arial,sans-serif;
+  background:
+    radial-gradient(circle at 50% 35%,#124d78 0%,#092849 42%,#030b1d 100%);
+  animation:welcomeIn 1s ease;
+}
+.wb-glow {
+  position:absolute;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  background:#0ea5e9;
+  filter:blur(90px);
+  opacity:.25;
+  animation:glowMove 4s infinite alternate;
+}
+.wb-logo {
+  width:190px;
+  max-width:55vw;
+  z-index:1;
+  animation:logoFloat 3s ease-in-out infinite;
+  filter:drop-shadow(0 0 18px #38bdf8);
+}
+.wb-ring {
+  fill:none;
+  stroke:#facc15;
+  stroke-width:2;
+  stroke-dasharray:12 10;
+  transform-origin:50px 50px;
+  animation:ringSpin 12s linear infinite;
+}
+.wb-title {
+  z-index:1;
+  font-size:38px;
+  font-weight:900;
+  letter-spacing:1px;
+  margin:12px 0 4px;
+  background:linear-gradient(90deg,#fff,#7dd3fc,#facc15,#fff);
+  background-size:200%;
+  color:transparent;
+  background-clip:text;
+  animation:titleShine 4s linear infinite;
+}
+.wb-welcome {
+  z-index:1;
+  font-size:23px;
+  margin:12px 0;
+  animation:welcomeText 1.5s ease both;
+}
+.wb-tagline {
+  z-index:1;
+  color:#bae6fd;
+  font-size:14px;
+  letter-spacing:2px;
+}
+.wb-message {
+  z-index:1;
+  margin:12px;
+  color:#e0f2fe;
+  font-size:16px;
+}
+.wb-button {
+  z-index:1;
+  margin-top:24px;
+  padding:15px 32px;
+  border:0;
+  border-radius:40px;
+  color:#082f49;
+  background:linear-gradient(100deg,#fde68a,#facc15);
+  font-size:17px;
+  font-weight:bold;
+  box-shadow:0 0 25px #facc1566;
+  animation:buttonPulse 2s infinite;
+  cursor:pointer;
+}
+@keyframes logoFloat {
+  0%,100% {transform:translateY(0) scale(1)}
+  50% {transform:translateY(-13px) scale(1.04)}
+}
+@keyframes ringSpin {
+  to {transform:rotate(360deg)}
+}
+@keyframes titleShine {
+  to {background-position:200% center}
+}
+@keyframes welcomeText {
+  from {opacity:0;transform:translateY(20px)}
+  to {opacity:1;transform:translateY(0)}
+}
+@keyframes buttonPulse {
+  50% {transform:scale(1.05);box-shadow:0 0 35px #facc15aa}
+}
+@keyframes glowMove {
+  to {transform:translate(40px,-25px) scale(1.3)}
+}
+@keyframes welcomeIn {
+  from {opacity:0}
+  to {opacity:1}
+}
+@media(prefers-reduced-motion:reduce) {
+  #welcomeScreen *,#welcomeScreen *:before {
+    animation:none!important;
+  }
+}
 </style>
 
 <div id="welcomeScreen">
-  <img src="./favicon.svg" alt="NeedBridge Logo">
-  <h1>Welcome! 🤗</h1>
-  <h2>NeedBridge ❤️</h2>
-  <p>موږ خوشحاله یو چې ته دلته یې!</p>
-  <p>مرسته وغواړه، مرسته وکړه او مینه خپره کړه.</p>
-  <p>Ask • Help • Grow Together</p>
-  <button onclick="document.getElementById('welcomeScreen').remove()">
-    راشه، پیل یې کړه ❤️
+  <div class="wb-glow"></div>
+
+  <svg class="wb-logo" viewBox="0 0 200 200"
+       xmlns="http://www.w3.org/2000/svg">
+    <circle class="wb-ring" cx="100" cy="100" r="88"/>
+    <circle cx="100" cy="100" r="76"
+            fill="#075985" stroke="#7dd3fc" stroke-width="2"/>
+
+    <path d="M35 105 Q100 15 165 105"
+          fill="none" stroke="#facc15"
+          stroke-width="9" stroke-linecap="round"/>
+
+    <path d="M42 105 V133 M158 105 V133"
+          stroke="white" stroke-width="8"
+          stroke-linecap="round"/>
+
+    <path d="M38 133 Q100 158 162 133"
+          fill="none" stroke="white"
+          stroke-width="7" stroke-linecap="round"/>
+
+    <path d="M100 65 V105"
+          stroke="white" stroke-width="6"
+          stroke-linecap="round"/>
+
+    <circle cx="100" cy="48" r="12" fill="#facc15"/>
+
+    <path d="M77 111 Q100 92 123 111"
+          fill="none" stroke="#7dd3fc"
+          stroke-width="7" stroke-linecap="round"/>
+
+    <path d="M65 119 Q50 103 42 119
+             M135 119 Q150 103 158 119"
+          fill="none" stroke="#facc15"
+          stroke-width="6" stroke-linecap="round"/>
+  </svg>
+
+  <div class="wb-welcome">🤗 Welcome to our family!</div>
+  <div class="wb-title">NeedBridge</div>
+  <div class="wb-tagline">ASK • HELP • GROW TOGETHER</div>
+  <div class="wb-message">
+    ❤️ دلته هر څوک مهم دی، هره مرسته ارزښت لري.
+  </div>
+
+  <button class="wb-button"
+    onclick="document.getElementById('welcomeScreen').remove()">
+    راځه، پیل یې کړو! ❤️
   </button>
 </div>
 
 <script>
-setTimeout(function() {
-  const screen = document.getElementById("welcomeScreen");
-  if (screen) screen.remove();
-}, 6000);
+setTimeout(function(){
+  const s=document.getElementById("welcomeScreen");
+  if(s) s.remove();
+},8000);
 </script>
-
 </body>
 </html>
