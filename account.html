@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeedBridge - My Account</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#eff6ff;color:#123052}
+header{background:#082f49;color:white;padding:20px 6%;font-size:24px;font-weight:bold}
+header a{color:white;text-decoration:none}
+main{max-width:440px;margin:55px auto;padding:20px}
+.panel{background:white;padding:30px;border-radius:20px;box-shadow:0 8px 30px #00000012}
+h2{text-align:center;margin-top:0}
+p{text-align:center;color:#64748b}
+input{width:100%;padding:14px;margin:9px 0;border:1px solid #cbd5e1;border-radius:10px;font-size:15px}
+button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;background:#0284c7;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+.gray{background:#64748b}
+.red{background:#dc2626}
+#status{font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.hidden{display:none}
+.back{display:block;text-align:center;margin-top:22px;color:#0284c7;text-decoration:none}
+</style>
+</head>
+<body>
+
+<header>🌍 NeedBridge</header>
+
+<main>
+<div class="panel">
+<h2>My Account</h2>
+<p>Join the NeedBridge global community.</p>
+
+<div id="authActions">
+<input id="email" type="email" placeholder="Email Address">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="signup()">Create Account</button>
+<button onclick="login()">Login</button>
+<button class="gray" onclick="resetPassword()">Forgot Password?</button>
+</div>
+
+<div id="logoutArea" class="hidden">
+<h3 style="text-align:center">You are logged in!</h3>
+<button class="red" onclick="logout()">Logout</button>
+</div>
+
+<p id="status">Please sign up or login.</p>
+</div>
+
+<a class="back" href="home.html">← Back to Home</a>
+</main>
+
+<script>
+const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
+const SUPABASE_KEY="sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const statusBox=document.getElementById("status");
+
+function showStatus(message){
+ statusBox.textContent=message;
+}
+
+function updateAccount(user){
+ document.getElementById("authActions").classList.toggle("hidden",!!user);
+ document.getElementById("logoutArea").classList.toggle("hidden",!user);
+
+ if(user){
+  showStatus("Logged in: "+user.email);
+ }else{
+  showStatus("Please sign up or login.");
+ }
+}
+
+async function signup(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ if(!email || !password){
+  showStatus("Please enter your email and password.");
+  return;
+ }
+
+ const {data,error}=await db.auth.signUp({email,password});
+
+ if(error){
+  showStatus(error.message);
+  return;
+ }
+
+ showStatus("Account created. Please check your email for verification.");
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ if(!email || !password){
+  showStatus("Please enter your email and password.");
+  return;
+ }
+
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+
+ if(error){
+  showStatus(error.message);
+  return;
+ }
+
+ updateAccount(data.user);
+}
+
+async function resetPassword(){
+ const email=document.getElementById("email").value.trim();
+
+ if(!email){
+  showStatus("Please enter your email address first.");
+  return;
+ }
+
+ const {error}=await db.auth.resetPasswordForEmail(email);
+
+ if(error){
+  showStatus(error.message);
+  return;
+ }
+
+ showStatus("Password reset email sent. Please check your inbox.");
+}
+
+async function logout(){
+ const {error}=await db.auth.signOut();
+
+ if(error){
+  showStatus(error.message);
+  return;
+ }
+
+ updateAccount(null);
+}
+
+async function checkSession(){
+ const {data}=await db.auth.getUser();
+ updateAccount(data.user);
+}
+
+checkSession();
+</script>
+
+</body>
+</html>
