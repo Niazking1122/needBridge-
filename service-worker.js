@@ -1,4 +1,4 @@
-const CACHE_NAME = "needbridge-v3";
+const CACHE_NAME = "needbridge-v4";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
