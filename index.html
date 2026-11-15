@@ -86,14 +86,24 @@ footer{text-align:center;padding:20px;color:#64748b}
   <p style="color:#38bdf8">Ask • Help • Grow Together</p>
 </header>
 <main>
-  <section>
-<h2>Login / Create Account</h2>
-<input id="email" type="email" placeholder="Email Address">
-<input id="password" type="password" placeholder="Password">
-<button onclick="signup()">Sign Up</button>
-<button onclick="login()">Login</button>
-<button class="danger" onclick="logout()">Logout</button>
-<p id="userStatus">Not logged in</p>
+  <section id="authPanel" class="hidden">
+  <h2>Login / Create Account</h2>
+
+  <div id="authActions">
+    <input id="email" type="email" placeholder="Email Address">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+    <button class="gray" onclick="resetPassword()">Forgot Password?</button>
+  </div>
+
+  <div id="logoutArea" class="hidden">
+    <p>You are logged in.</p>
+    <button class="danger" onclick="logout()">Logout</button>
+  </div>
+
+  <p id="userStatus">Not logged in</p>
 </section>
 
 <section id="profilePanel" class="hidden">
