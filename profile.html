@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeedBridge - My Profile</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eff6ff;font-family:Arial;color:#123052}
+header{background:#082f49;color:white;padding:20px 6%;font-size:23px;font-weight:bold}
+main{max-width:600px;margin:35px auto;padding:16px}
+.card{background:white;border-radius:20px;padding:28px;text-align:center;box-shadow:0 6px 25px #0001}
+.avatar{font-size:65px}
+h2{margin-bottom:8px}
+p{color:#64748b;overflow-wrap:anywhere}
+.info{background:#f1f5f9;padding:15px;border-radius:12px;margin-top:20px}
+a,button{display:block;text-decoration:none;text-align:center;padding:14px;margin-top:12px;border:0;border-radius:10px;background:#0284c7;color:white;font-size:15px;cursor:pointer}
+.secondary{background:#64748b}
+</style>
+</head>
+<body>
+<header>🌍 NeedBridge</header>
+<main>
+<div class="card">
+<div class="avatar">👤</div>
+<h2>My Profile</h2>
+<p>Your NeedBridge account information</p>
+<div class="info">
+<strong>Account Email</strong>
+<p id="email">Loading...</p>
+<strong>Account Status</strong>
+<p id="accountStatus">Checking...</p>
+</div>
+<a href="account.html">Manage Account</a>
+<a href="home.html" class="secondary">Back to Home</a>
+</div>
+</main>
+<script>
+const db=window.supabase.createClient(
+"https://urozgfqxtbjmejyyocow.supabase.co",
+"sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T"
+);
+async function loadProfile(){
+const {data,error}=await db.auth.getUser();
+if(error || !data.user){
+document.getElementById("email").textContent="Not logged in";
+document.getElementById("accountStatus").textContent="Please login first";
+return;
+}
+document.getElementById("email").textContent=data.user.email;
+document.getElementById("accountStatus").textContent="Logged in";
+}
+loadProfile();
+</script>
+</body>
+</html>
