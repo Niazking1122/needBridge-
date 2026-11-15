@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeedBridge - A World of Opportunities</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f3f7fc;color:#102b50}
+header{background:#082f49;color:white;padding:18px 6%;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:25px;font-weight:bold}
+.logo span{color:#38bdf8}
+nav{display:flex;gap:20px;align-items:center}
+nav a{color:white;text-decoration:none;font-size:14px}
+.login{background:#0284c7;padding:11px 18px;border-radius:25px}
+.hero{background:linear-gradient(110deg,#082f49,#075985);color:white;padding:65px 7%;display:flex;align-items:center;justify-content:space-between;gap:25px}
+.hero h1{font-size:42px;max-width:550px;margin-bottom:16px}
+.hero p{font-size:17px;line-height:1.7;max-width:500px;color:#dbeafe}
+.hero a{display:inline-block;margin-top:25px;background:#0ea5e9;color:white;text-decoration:none;padding:14px 25px;border-radius:30px;font-weight:bold}
+.globe{font-size:130px}
+.container{max-width:1150px;margin:35px auto;padding:0 18px}
+h2{font-size:25px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}
+.card{background:white;padding:25px;border-radius:18px;text-decoration:none;color:#102b50;box-shadow:0 5px 20px #0f172a0c;transition:.2s;border:1px solid #e5edf5}
+.card:hover{transform:translateY(-4px);box-shadow:0 10px 25px #0f172a15}
+.icon{font-size:38px;margin-bottom:15px}
+.card h3{margin-bottom:8px;font-size:19px}
+.card p{color:#64748b;font-size:14px;line-height:1.6}
+.dashboard{background:white;padding:24px;border-radius:18px;margin-top:30px}
+.dashboard a{display:block;padding:15px;border-bottom:1px solid #e5edf5;color:#164e75;text-decoration:none}
+.admin{margin-top:22px;background:#082f49;color:white;padding:23px;border-radius:16px}
+footer{text-align:center;padding:28px;color:#64748b;font-size:13px}
+@media(max-width:700px){
+header{padding:16px 5%}
+nav a:not(.login){display:none}
+.hero{padding:45px 7%}
+.hero h1{font-size:32px}
+.globe{font-size:65px}
+.grid{grid-template-columns:repeat(2,1fr);gap:11px}
+.card{padding:17px}
+.card h3{font-size:16px}
+}
+@media(max-width:380px){
+.grid{grid-template-columns:1fr}
+.globe{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🌍 Need<span>Bridge</span></div>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="visa.html">Visa</a>
+    <a href="jobs.html">Jobs</a>
+    <a class="login" href="account.html">My Account</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <h1>Your Future Starts Here.</h1>
+    <p>Connect globally. Discover opportunities. Help one another. Your world of opportunities begins with NeedBridge.</p>
+    <a href="account.html">Get Started →</a>
+  </div>
+  <div class="globe">🌍</div>
+</section>
+
+<main class="container">
+  <h2>Explore NeedBridge</h2>
+
+  <div class="grid">
+    <a class="card" href="account.html">
+      <div class="icon">👤</div>
+      <h3>My Account</h3>
+      <p>Create an account or login to NeedBridge.</p>
+    </a>
+
+    <a class="card" href="visa.html">
+      <div class="icon">✈️</div>
+      <h3>Visa Center</h3>
+      <p>Explore countries and visa information.</p>
+    </a>
+
+    <a class="card" href="jobs.html">
+      <div class="icon">💼</div>
+      <h3>Global Jobs</h3>
+      <p>Discover international work opportunities.</p>
+    </a>
+
+    <a class="card" href="education.html">
+      <div class="icon">🎓</div>
+      <h3>Education</h3>
+      <p>Find universities and scholarships.</p>
+    </a>
+
+    <a class="card" href="help.html">
+      <div class="icon">🤝</div>
+      <h3>Help Network</h3>
+      <p>Give help and receive support worldwide.</p>
+    </a>
+
+    <a class="card" href="messages.html">
+      <div class="icon">💬</div>
+      <h3>Messages</h3>
+      <p>Connect and communicate with people.</p>
+    </a>
+  </div>
+
+  <section class="dashboard">
+    <h2>My Dashboard</h2>
+    <a href="profile.html">👤 &nbsp; My Profile →</a>
+    <a href="messages.html">🔔 &nbsp; Notifications and Messages →</a>
+    <a href="account.html">⚙️ &nbsp; Settings and Security →</a>
+  </section>
+
+  <section class="admin">
+    <h2>🛡️ Admin Control Center</h2>
+    <p>Manage users, review opportunities and handle reports.</p>
+    <p style="margin-top:12px">Admin access required.</p>
+  </section>
+</main>
+
+<footer>
+  NeedBridge • Ask • Help • Grow Together
+  <p style="margin-top:8px">A World of Opportunities</p>
+</footer>
+
+</body>
+</html>
