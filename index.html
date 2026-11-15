@@ -1248,7 +1248,18 @@ setTimeout(function(){
     <hr>
     <h3>Find Opportunities</h3>
     <input id="oppSearch" placeholder="Search by title or country">
-
+<select id="oppCountryFilter">
+  <option value="">All Countries</option>
+  <option>Turkey</option>
+  <option>Canada</option>
+  <option>United Kingdom</option>
+  <option>United States</option>
+  <option>Germany</option>
+  <option>Australia</option>
+  <option>UAE</option>
+  <option>Saudi Arabia</option>
+  <option>Japan</option>
+</select>
     <select id="oppFilter">
       <option value="">All Types</option>
       <option>Job</option>
@@ -1301,7 +1312,7 @@ async function loadOpportunities() {
     .value.trim().toLowerCase();
 
   const filter = document.getElementById("oppFilter").value;
-
+const countryFilter = document.getElementById("oppCountryFilter").value;
   const results = (data || []).filter(item => {
     const text = [
       item.title,
@@ -1310,7 +1321,8 @@ async function loadOpportunities() {
     ].join(" ").toLowerCase();
 
     return text.includes(search) &&
-      (!filter || item.opportunity_type === filter);
+  (!filter || item.opportunity_type === filter) &&
+  (!countryFilter || item.country.toLowerCase() === countryFilter.toLowerCase());
   });
 
   list.replaceChildren();
@@ -1421,6 +1433,8 @@ document.getElementById("oppSearch")
   ?.addEventListener("input", loadOpportunities);
 
 document.getElementById("oppFilter")
+  ?.addEventListener("change", loadOpportunities);
+    document.getElementById("oppCountryFilter")
   ?.addEventListener("change", loadOpportunities);
 </script>
   <script>
