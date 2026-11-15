@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeedBridge - Admin Center</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#eff6ff;color:#123052}
+header{background:#082f49;color:white;padding:20px 6%;font-size:23px;font-weight:bold}
+main{max-width:900px;margin:35px auto;padding:18px}
+.hero{background:linear-gradient(120deg,#082f49,#075985);color:white;padding:30px;border-radius:18px}
+.hero p{color:#dbeafe;line-height:1.6}
+.card{background:white;padding:23px;border-radius:16px;margin-top:18px;box-shadow:0 4px 15px #0000000b}
+input{width:100%;padding:13px;margin:9px 0;border:1px solid #cbd5e1;border-radius:10px}
+button,a{display:inline-block;padding:13px 18px;border:0;border-radius:10px;background:#0284c7;color:white;text-decoration:none;cursor:pointer;margin-top:12px}
+.back{background:#64748b}
+.note{color:#64748b;font-size:13px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>🌍 NeedBridge Admin</header>
+<main>
+<section class="hero">
+<h1>🛡️ Admin Control Center</h1>
+<p>Manage your NeedBridge platform securely.</p>
+</section>
+
+<section class="card">
+<h2>Admin Access</h2>
+<p id="status" class="note">Checking your account...</p>
+<button onclick="checkAdmin()">Check Admin Access</button>
+</section>
+
+<section class="card">
+<h2>Management</h2>
+<p>Use the original NeedBridge Admin Panel to review users, opportunities and reports.</p>
+<a href="index.html">Open Existing Admin Panel →</a>
+<p class="note">Admin permissions are controlled by the original NeedBridge system. This page does not grant admin access.</p>
+</section>
+
+<a class="back" href="home.html">← Back to Home</a>
+</main>
+
+<script>
+const db=window.supabase.createClient(
+"https://urozgfqxtbjmejyyocow.supabase.co",
+"sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T"
+);
+
+async function checkAdmin(){
+const status=document.getElementById("status");
+const {data,error}=await db.auth.getUser();
+
+if(error || !data.user){
+status.textContent="Please login first.";
+return;
+}
+
+status.textContent="Logged in as: "+data.user.email+
+". Admin permission must be checked in the original NeedBridge system.";
+}
+checkAdmin();
+</script>
+</body>
+</html>
