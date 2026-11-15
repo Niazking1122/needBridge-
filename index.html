@@ -80,7 +80,7 @@ footer{text-align:center;padding:20px;color:#64748b}
 <body>
 <header style="background:#07152f;padding:25px;text-align:center;color:white">
   <div style="font-size:42px;font-weight:bold;letter-spacing:5px;color:#38bdf8;text-shadow:0 0 12px #0284c7">
-    🌉 NIAZ
+    🌉 Niaz
   </div>
   <p style="color:#e2e8f0;font-size:16px">Need Help? We're Here!</p>
   <p style="color:#38bdf8">Ask • Help • Grow Together</p>
@@ -1146,6 +1146,399 @@ setTimeout(function(){
   if(screen) screen.remove();
 },8000);
 </script>
+<style>
+#globalOpportunities {
+  padding: 22px;
+  margin: 20px 0;
+  border-radius: 16px;
+  background: #f5f8ff;
+  color: #172033;
+}
+#globalOpportunities h2 {
+  margin-bottom: 8px;
+}
+#globalOpportunities .opp-form {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+#globalOpportunities input,
+#globalOpportunities select,
+#globalOpportunities textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd4e0;
+  border-radius: 9px;
+  font: inherit;
+  box-sizing: border-box;
+}
+#globalOpportunities button,
+#adminOpportunities button {
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 9px;
+  background: #1769e0;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+#globalOpportunities .opp-card,
+#adminOpportunities .opp-card {
+  background: white;
+  border: 1px solid #e0e6ef;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 12px 0;
+}
+#globalOpportunities .opp-card a,
+#adminOpportunities .opp-card a {
+  color: #1769e0;
+}
+#adminOpportunities {
+  margin-top: 20px;
+}
+</style>
 
+<script>
+(function () {
+  const helpSection = [...document.querySelectorAll("section")]
+    .find(section =>
+      section.querySelector("h2")?.textContent.trim() === "Help Categories"
+    );
+
+  if (!helpSection) {
+    console.error("NeedBridge: Help Categories section not found.");
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.id = "globalOpportunities";
+
+  section.innerHTML = `
+    <h2>🌍 Global Opportunities</h2>
+    <p>Discover jobs, work visas, student visas, scholarships and more.</p>
+
+    <form class="opp-form" id="opportunityForm">
+      <input id="oppTitle" placeholder="Opportunity Title" required>
+      <input id="oppCountry" placeholder="Country" required>
+      <input id="oppCity" placeholder="City (Optional)">
+
+      <select id="oppType" required>
+        <option value="">Select Opportunity Type</option>
+        <option>Job</option>
+        <option>Work Visa</option>
+        <option>Student Visa</option>
+        <option>University Admission</option>
+        <option>Scholarship</option>
+        <option>Training</option>
+        <option>Other</option>
+      </select>
+
+      <textarea id="oppDescription"
+        placeholder="Write full details..."
+        rows="4" required></textarea>
+
+      <input id="oppSource" type="url"
+        placeholder="Official Source Link (https://...)">
+
+      <button type="submit">Submit Opportunity</button>
+      <p id="oppMessage" aria-live="polite"></p>
+    </form>
+
+    <hr>
+    <h3>Find Opportunities</h3>
+    <input id="oppSearch" placeholder="Search by title or country">
+
+    <select id="oppFilter">
+      <option value="">All Types</option>
+      <option>Job</option>
+      <option>Work Visa</option>
+      <option>Student Visa</option>
+      <option>University Admission</option>
+      <option>Scholarship</option>
+      <option>Training</option>
+      <option>Other</option>
+    </select>
+
+    <div id="opportunityList">Loading opportunities...</div>
+  `;
+
+  helpSection.parentNode.insertBefore(section, helpSection);
+
+  const adminPanel = document.getElementById("adminPanel");
+  if (adminPanel) {
+    const adminBox = document.createElement("div");
+    adminBox.id = "adminOpportunities";
+    adminBox.innerHTML = `
+      <hr>
+      <h3>Global Opportunities Review</h3>
+      <div id="adminOpportunityList"></div>
+    `;
+    adminPanel.appendChild(adminBox);
+  }
+})();
+</script>
+  <script>
+async function loadOpportunities() {
+  const list = document.getElementById("opportunityList");
+  if (!list) return;
+
+  list.textContent = "Loading opportunities...";
+
+  const { data, error } = await db
+    .from("nb_opportunities")
+    .select("*")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Could not load opportunities.";
+    console.error(error);
+    return;
+  }
+
+  const search = document.getElementById("oppSearch")
+    .value.trim().toLowerCase();
+
+  const filter = document.getElementById("oppFilter").value;
+
+  const results = (data || []).filter(item => {
+    const text = [
+      item.title,
+      item.country,
+      item.city || ""
+    ].join(" ").toLowerCase();
+
+    return text.includes(search) &&
+      (!filter || item.opportunity_type === filter);
+  });
+
+  list.replaceChildren();
+
+  if (!results.length) {
+    list.textContent = "No approved opportunities found.";
+    return;
+  }
+
+  results.forEach(item => {
+    const card = document.createElement("article");
+    card.className = "opp-card";
+
+    const title = document.createElement("h3");
+    title.textContent = item.title;
+
+    const country = document.createElement("p");
+    country.textContent = "Country: " + item.country;
+
+    const type = document.createElement("p");
+    type.textContent = "Type: " + item.opportunity_type;
+
+    const description = document.createElement("p");
+    description.textContent = item.description;
+
+    card.append(title, country, type, description);
+
+    if (item.source_url) {
+      try {
+        const url = new URL(item.source_url);
+
+        if (["https:", "http:"].includes(url.protocol)) {
+          const link = document.createElement("a");
+          link.href = url.href;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "View Official Source";
+          card.appendChild(link);
+        }
+      } catch (_) {}
+    }
+
+    list.appendChild(card);
+  });
+}
+
+async function submitOpportunity(event) {
+  event.preventDefault();
+
+  const message = document.getElementById("oppMessage");
+
+  if (!currentUser) {
+    message.textContent = "Please login before submitting.";
+    return;
+  }
+
+  const source = document.getElementById("oppSource").value.trim();
+
+  if (source) {
+    try {
+      const url = new URL(source);
+      if (!["https:", "http:"].includes(url.protocol)) {
+        throw new Error("Invalid URL");
+      }
+    } catch (_) {
+      message.textContent = "Please enter a valid website link.";
+      return;
+    }
+  }
+
+  const opportunity = {
+    owner_id: currentUser.id,
+    title: document.getElementById("oppTitle").value.trim(),
+    country: document.getElementById("oppCountry").value.trim(),
+    city: document.getElementById("oppCity").value.trim(),
+    opportunity_type: document.getElementById("oppType").value,
+    description: document.getElementById("oppDescription").value.trim(),
+    source_url: source || null,
+    status: "pending"
+  };
+
+  message.textContent = "Submitting...";
+
+  const { error } = await db
+    .from("nb_opportunities")
+    .insert(opportunity);
+
+  if (error) {
+    console.error(error);
+    message.textContent = "Submission failed. Please try again.";
+    return;
+  }
+
+  document.getElementById("opportunityForm").reset();
+
+  message.textContent =
+    "Submitted successfully. It will appear after Admin approval.";
+
+  if (isAdmin) {
+    await loadAdminOpportunities();
+  }
+}
+
+document.getElementById("opportunityForm")
+  ?.addEventListener("submit", submitOpportunity);
+
+document.getElementById("oppSearch")
+  ?.addEventListener("input", loadOpportunities);
+
+document.getElementById("oppFilter")
+  ?.addEventListener("change", loadOpportunities);
+</script>
+  <script>
+async function loadAdminOpportunities() {
+  const list = document.getElementById("adminOpportunityList");
+
+  if (!list || !isAdmin) return;
+
+  list.textContent = "Loading submissions...";
+
+  const { data, error } = await db
+    .from("nb_opportunities")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Could not load submissions.";
+    console.error(error);
+    return;
+  }
+
+  list.replaceChildren();
+
+  if (!data || !data.length) {
+    list.textContent = "No pending opportunities.";
+    return;
+  }
+
+  data.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "opp-card";
+
+    const title = document.createElement("h3");
+    title.textContent = item.title;
+
+    const country = document.createElement("p");
+    country.textContent = "Country: " + item.country;
+
+    const type = document.createElement("p");
+    type.textContent = "Type: " + item.opportunity_type;
+
+    const description = document.createElement("p");
+    description.textContent = item.description;
+
+    card.append(title, country, type, description);
+
+    if (item.source_url) {
+      try {
+        const url = new URL(item.source_url);
+
+        if (["https:", "http:"].includes(url.protocol)) {
+          const link = document.createElement("a");
+          link.href = url.href;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Check Source Link";
+          card.appendChild(link);
+        }
+      } catch (_) {}
+    }
+
+    const approve = document.createElement("button");
+    approve.textContent = "Approve";
+    approve.addEventListener("click", () =>
+      changeOpportunityStatus(item.id, "approved")
+    );
+
+    const reject = document.createElement("button");
+    reject.textContent = "Reject";
+    reject.style.background = "#c62828";
+    reject.style.marginLeft = "8px";
+    reject.addEventListener("click", () =>
+      changeOpportunityStatus(item.id, "rejected")
+    );
+
+    card.append(approve, reject);
+    list.appendChild(card);
+  });
+}
+
+async function changeOpportunityStatus(id, status) {
+  if (!isAdmin) return;
+
+  const { error } = await db
+    .from("nb_opportunities")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    alert("Could not update opportunity.");
+    return;
+  }
+
+  await loadAdminOpportunities();
+  await loadOpportunities();
+
+  alert(status === "approved"
+    ? "Opportunity approved and published."
+    : "Opportunity rejected.");
+}
+
+/* Connect opportunities with the existing login system */
+const previousUpdateUser = updateUser;
+
+updateUser = async function () {
+  await previousUpdateUser();
+
+  await loadOpportunities();
+
+  if (isAdmin) {
+    await loadAdminOpportunities();
+  }
+};
+
+/* Initial load */
+updateUser();
+</script>
 </body>
 </html>
