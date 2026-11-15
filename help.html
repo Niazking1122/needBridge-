@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeedBridge - Help Network</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#eff6ff;color:#123052}
+header{background:#082f49;color:white;padding:20px 6%;font-size:23px;font-weight:bold}
+main{max-width:900px;margin:35px auto;padding:18px}
+.hero{background:linear-gradient(120deg,#082f49,#0284c7);color:white;padding:32px;border-radius:18px}
+.hero p{color:#e0f2fe;line-height:1.6}
+.card{background:white;padding:22px;border-radius:15px;margin-top:18px;box-shadow:0 4px 15px #0000000b}
+input,textarea,select{width:100%;padding:13px;margin:9px 0;border:1px solid #cbd5e1;border-radius:10px;font-size:15px}
+textarea{min-height:100px}
+button{background:#0284c7;color:white;border:0;border-radius:10px;padding:13px 20px;font-size:15px;cursor:pointer}
+.back{display:inline-block;background:#64748b;color:white;text-decoration:none;padding:13px 18px;border-radius:10px;margin-top:20px}
+.note{color:#64748b;font-size:13px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>🌍 NeedBridge</header>
+<main>
+<section class="hero">
+<h1>🤝 Global Help Network</h1>
+<p>Ask for help, offer support and connect with people around the world.</p>
+</section>
+
+<section class="card">
+<h2>Share Your Help Request</h2>
+<p class="note">This is a demonstration form. It does not submit to the existing NeedBridge database yet.</p>
+<form onsubmit="demoSubmit(event)">
+<input id="name" placeholder="Your Name" required>
+<select id="category" required>
+<option value="">Choose Help Category</option>
+<option>Education</option>
+<option>Employment</option>
+<option>Visa Information</option>
+<option>Financial Support</option>
+<option>Other Help</option>
+</select>
+<textarea id="details" placeholder="Describe what help you need or can offer..." required></textarea>
+<button type="submit">Submit Request</button>
+</form>
+<p id="status" class="note"></p>
+</section>
+
+<a class="back" href="home.html">← Back to Home</a>
+</main>
+<script>
+function demoSubmit(event){
+event.preventDefault();
+document.getElementById("status").textContent=
+"Demo only: your request has not been saved. The database connection will be added later.";
+}
+</script>
+</body>
+</html>
