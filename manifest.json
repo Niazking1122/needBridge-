@@ -2,7 +2,7 @@
   "name": "NeedBridge",
   "short_name": "NeedBridge",
   "description": "Free Global Help Platform",
-  "start_url": "./",
+  "start_url": "./home.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#07152f",
