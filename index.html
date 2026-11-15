@@ -363,6 +363,10 @@ async function updateUser(){
 async function loadProfile(){
  if(!currentUser)return;
  document.getElementById("profileEmail").textContent=currentUser.email||"";
+   const emailVerified = !!currentUser.email_confirmed_at;
+
+ document.getElementById("emailVerificationStatus").textContent =
+  emailVerified ? "Verified ✓" : "Not verified";
  const nameInput=document.getElementById("profileName");
  const photo=document.getElementById("profilePhoto");
  nameInput.value="";
