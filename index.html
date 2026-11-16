@@ -137,7 +137,13 @@ footer{text-align:center;padding:20px;color:#64748b}
   #authPanel{
     margin:12px;
   }
-}</style> 
+}
+/* Hide app sections before login */
+body:not(.signed-in) main > section:not(#authPanel),
+body:not(.signed-in) footer {
+  display: none !important;
+}
+</style> 
 </head>
 <body>
 <header style="background:#07152f;padding:25px;text-align:center;color:white">
