@@ -75,7 +75,69 @@ footer{text-align:center;padding:20px;color:#64748b}
 #visaHelpPanel h2{color:#075985}
 #visaHelpMessage{font-weight:bold;color:#075985;overflow-wrap:anywhere}
 #visaHelpPanel small{color:#475569}
-</style>
+/* NeedBridge Green Login Design */
+#authPanel{
+  max-width:480px;
+  margin:20px auto;
+  padding:20px;
+  background:#fff;
+  border-radius:25px;
+  box-shadow:0 8px 30px rgba(0,0,0,.10);
+  overflow:hidden;
+  border:1px solid #e5f5e9;
+}
+
+#authPanel::before{
+  content:"";
+  display:block;
+  height:300px;
+  margin:-20px -20px 25px;
+  background-image:url("a65b8318-ba82-4251-8797-7edb503aac84.png");
+  background-size:100% auto;
+  background-position:top center;
+  background-repeat:no-repeat;
+  background-color:#087b38;
+}
+
+#authPanel h2{
+  color:#087b38;
+  font-size:26px;
+  text-align:center;
+  margin-bottom:20px;
+}
+
+#authPanel input{
+  width:100%;
+  padding:16px;
+  margin:10px 0;
+  border:1px solid #dce8df;
+  border-radius:30px;
+  background:#f5f8f5;
+  font-size:16px;
+}
+
+#authPanel button{
+  width:100%;
+  padding:16px;
+  margin:9px 0;
+  border:0;
+  border-radius:30px;
+  background:linear-gradient(100deg,#54d51c,#00833b);
+  color:white;
+  font-size:17px;
+  font-weight:bold;
+}
+
+#authPanel .gray{
+  background:#eaf4ed;
+  color:#087b38;
+}
+
+@media(max-width:600px){
+  #authPanel{
+    margin:12px;
+  }
+}</style> 
 </head>
 <body>
 <header style="background:#07152f;padding:25px;text-align:center;color:white">
