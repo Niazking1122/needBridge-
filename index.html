@@ -1,532 +1,424 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NeedBridge - Free Help Platform</title>
-<link rel="manifest" href="manifest.json">
+<title>NeedBridge - Ask • Help • Grow Together</title>
 <meta name="theme-color" content="#075985">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<meta name="google-site-verification" content="XWMqX5F26rqtmAoWGIVzNwA-bxM4CfKmoav7aCp5OPs" />
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+:root{--blue:#075985;--sky:#0284c7;--green:#15803d;--ink:#172033;--muted:#64748b;--bg:#f1f5f9}
 *{box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;color:#172033}
-header{background:#075985;color:white;text-align:center;padding:22px}
-header h1{margin:0;font-size:30px}
-main{max-width:900px;margin:20px auto;padding:12px}
-section,.post{background:white;padding:18px;margin:15px 0;border-radius:12px;box-shadow:0 2px 8px #0001}
-input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
-textarea{min-height:100px}
-button{
-padding:12px 20px;
-border:0;
-border-radius:10px;
-background:linear-gradient(135deg,#0284c7,#075985);
-color:white;
-margin:5px;
-cursor:pointer;
-font-size:15px;
-font-weight:bold;
-box-shadow:0 4px 10px #0284c744;
-transition:.3s;
-}
-button:hover{
-background:#0ea5e9;
-transform:translateY(-2px);
-}
-button:disabled{opacity:.5;cursor:not-allowed}
-.green{background:#15803d}
-.danger{background:#dc2626}
-.gray{background:#475569}
-.orange{background:#c2410c}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif}
+header{background:#07152f;color:#fff;text-align:center;padding:25px 15px}
+.logo{font-size:38px;font-weight:800;letter-spacing:4px;color:#38bdf8}
+header p{margin:8px 0;color:#e2e8f0}
+main{max-width:900px;margin:18px auto;padding:0 12px 25px}
+section,.card{background:#fff;padding:18px;margin:14px 0;border-radius:14px;box-shadow:0 2px 9px #00000010}
+h2{margin-top:0;color:var(--blue)}
+input,textarea,select{display:block;width:100%;padding:13px;margin:8px 0;border:1px solid #cbd5e1;border-radius:9px;font-size:16px;background:#fff}
+textarea{min-height:110px;resize:vertical}
+button{border:0;border-radius:9px;padding:12px 16px;margin:5px 4px 5px 0;background:var(--sky);color:#fff;font-size:15px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+button.green{background:var(--green)}button.gray{background:#475569}button.red{background:#b91c1c}
 .hidden{display:none!important}
-.post{border-left:5px solid #0284c7;overflow-wrap:anywhere}
-.status{font-weight:bold;color:#075985}
-#message{padding:12px;margin:10px 0;border-radius:7px;overflow-wrap:anywhere}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.stat{background:#e0f2fe;padding:15px;text-align:center;border-radius:10px}
-.stat h3{font-size:14px}
-.stat strong{font-size:28px;color:#075985}
-.profile-photo{width:125px;height:125px;border-radius:50%;object-fit:cover;border:3px solid #0284c7;display:block;margin:12px auto}
-.request-photo{width:55px;height:55px;border-radius:50%;object-fit:cover;border:2px solid #0284c7;vertical-align:middle;margin-right:10px}
-.request-owner{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.request-owner img{width:55px;height:55px;border-radius:50%;object-fit:cover}
-.request-owner span{font-weight:bold;color:#075985}
-.notification{border-left:5px solid #0284c7;padding:14px;margin:10px 0;background:#f0f9ff;border-radius:8px}
-.notification.unread{border-left-color:#16a34a;background:#f0fdf4}
-.notification p{overflow-wrap:anywhere}
-.unread-badge{display:inline-block;background:#dc2626;color:white;border-radius:50%;min-width:25px;height:25px;line-height:25px;text-align:center;font-size:14px;margin-left:8px;padding:0 6px}
-.report-card{border-left:5px solid #dc2626}
-.report-card.reviewed{border-left-color:#15803d}
-.report-card.dismissed{border-left-color:#64748b}
-.report-details{background:#f8fafc;padding:12px;border-radius:8px;margin:10px 0;overflow-wrap:anywhere}
-.report-status{display:inline-block;padding:5px 10px;border-radius:20px;background:#fef3c7;color:#92400e;font-weight:bold}
-.report-status.reviewed{background:#dcfce7;color:#166534}
-.report-status.dismissed{background:#e2e8f0;color:#334155}
-.chat-message{padding:10px;margin:8px 0;border-radius:9px;background:#f0f9ff;overflow-wrap:anywhere}
-.chat-message.mine{background:#dcfce7;margin-left:8%}
-.chat-message img{max-width:100%;max-height:260px;border-radius:8px;display:block}
-.chat-message audio{max-width:100%;display:block}
-#chatMessages{max-height:420px;overflow-y:auto}
-footer{text-align:center;padding:20px;color:#64748b}
-@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}button{max-width:100%}}
-#visaHelpPanel{border:2px solid #bae6fd;background:linear-gradient(180deg,#fff,#f0f9ff)}
-#visaHelpPanel h2{color:#075985}
-#visaHelpMessage{font-weight:bold;color:#075985;overflow-wrap:anywhere}
-#visaHelpPanel small{color:#475569}
-/* NeedBridge Green Login Design */
-#authPanel{
-  max-width:480px;
-  margin:20px auto;
-  padding:20px;
-  background:#fff;
-  border-radius:25px;
-  box-shadow:0 8px 30px rgba(0,0,0,.10);
-  overflow:hidden;
-  border:1px solid #e5f5e9;
-}
-
-#authPanel::before{
-  content:"";
-  display:block;
-  height:300px;
-  margin:-20px -20px 25px;
-  background-image:url("a65b8318-ba82-4251-8797-7edb503aac84.png");
-  background-size:100% auto;
-  background-position:top center;
-  background-repeat:no-repeat;
-  background-color:#087b38;
-}
-
-#authPanel h2{
-  color:#087b38;
-  font-size:26px;
-  text-align:center;
-  margin-bottom:20px;
-}
-
-#authPanel input{
-  width:100%;
-  padding:16px;
-  margin:10px 0;
-  border:1px solid #dce8df;
-  border-radius:30px;
-  background:#f5f8f5;
-  font-size:16px;
-}
-
-#authPanel button{
-  width:100%;
-  padding:16px;
-  margin:9px 0;
-  border:0;
-  border-radius:30px;
-  background:linear-gradient(100deg,#54d51c,#00833b);
-  color:white;
-  font-size:17px;
-  font-weight:bold;
-}
-
-#authPanel .gray{
-  background:#eaf4ed;
-  color:#087b38;
-}
-
-@media(max-width:600px){
-  #authPanel{
-    margin:12px;
-  }
-}
-/* Hide app sections before login */
-body:not(.signed-in) main > section:not(#authPanel),
-body:not(.signed-in) footer {
-  display: none !important;
-}
-</style> 
+#authPanel{max-width:520px;margin:20px auto;border:1px solid #dbeafe}
+#authPanel h2{text-align:center}
+#message{display:none;padding:13px;border-radius:9px;margin:12px 0;overflow-wrap:anywhere}
+#message.show{display:block;background:#eff6ff;color:#075985;border:1px solid #bfdbfe}
+#message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+#message.success{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.status{color:var(--blue);font-weight:bold;overflow-wrap:anywhere}
+.post{border-left:5px solid var(--sky);padding:14px;margin:12px 0;background:#f8fafc;border-radius:8px;overflow-wrap:anywhere}
+.post small{color:var(--muted)}
+.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#e0f2fe;color:#075985;font-size:12px;font-weight:bold}
+.profile-photo{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--sky)}
+footer{text-align:center;color:var(--muted);padding:20px}
+.note{font-size:14px;color:var(--muted);line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.logo{font-size:31px}button{max-width:100%}}
+a{color:#0369a1;overflow-wrap:anywhere}
+</style>
 </head>
 <body>
-<header style="background:#07152f;padding:25px;text-align:center;color:white">
-  <div style="font-size:42px;font-weight:bold;letter-spacing:5px;color:#38bdf8;text-shadow:0 0 12px #0284c7">
-    🌉 Niaz
-  </div>
-  <p style="color:#e2e8f0;font-size:16px">Need Help? We're Here!</p>
-  <p style="color:#38bdf8">Ask • Help • Grow Together</p>
+<header>
+  <div class="logo">🌉 NeedBridge</div>
+  <p>Need Help? We're Here!</p>
+  <p style="color:#38bdf8">ASK • HELP • GROW TOGETHER</p>
 </header>
+
 <main>
   <section id="authPanel">
-  <h2>Login / Create Account</h2>
+    <h2>Welcome to NeedBridge</h2>
+    <p class="note">Create an account or log in to ask for help and connect with the community.</p>
+    <label for="email">Email address</label>
+    <input id="email" type="email" autocomplete="email" placeholder="Enter your email">
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+    <button id="signupBtn" class="green" type="button">Create Account</button>
+    <button id="loginBtn" type="button">Login</button>
+    <button id="forgotBtn" class="gray" type="button">Forgot Password?</button>
+    <p id="userStatus" class="status">Not logged in</p>
+    <div id="logoutArea" class="hidden"><button id="logoutBtn" class="red" type="button">Logout</button></div>
+  </section>
 
-  <div id="authActions">
-    <input id="email" type="email" placeholder="Email Address">
-    <input id="password" type="password" placeholder="Password">
+  <div id="message" role="status" aria-live="polite"></div>
 
-    <button onclick="signup()">Sign Up</button>
-    <button onclick="login()">Login</button>
-    <button class="gray" onclick="resetPassword()">Forgot Password?</button>
-  </div>
+  <section id="profilePanel" class="hidden">
+    <h2>My Profile</h2>
+    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+    <p><strong>Email verification:</strong> <span id="verificationStatus">Checking...</span></p>
+    <img id="profilePhoto" class="profile-photo hidden" alt="Profile photo">
+    <label for="profileName">Full name</label>
+    <input id="profileName" maxlength="100" placeholder="Your full name">
+    <button id="saveProfileBtn" class="green" type="button">Save Profile</button>
+    <label for="photoFile">Profile photo (JPG, PNG or WEBP; max 5 MB)</label>
+    <input id="photoFile" type="file" accept="image/jpeg,image/png,image/webp">
+    <button id="uploadPhotoBtn" type="button">Upload Photo</button>
+  </section>
 
-  <div id="logoutArea" class="hidden">
-    <p>You are logged in.</p>
-    <button class="danger" onclick="logout()">Logout</button>
-  </div>
+  <section id="requestPanel" class="hidden">
+    <h2>Request Help</h2>
+    <p class="note">Share only the information needed. Do not post passwords, bank details or private identity documents.</p>
+    <input id="postTitle" maxlength="150" placeholder="What help do you need?">
+    <select id="category">
+      <option value="">Select a category</option>
+      <option>Food</option><option>Education</option><option>Healthcare</option>
+      <option>Visa</option><option>Clothing</option><option>Volunteering</option>
+    </select>
+    <textarea id="description" maxlength="5000" placeholder="Explain your request"></textarea>
+    <div class="grid">
+      <input id="country" maxlength="100" placeholder="Country">
+      <input id="city" maxlength="100" placeholder="City">
+    </div>
+    <button id="submitPostBtn" class="green" type="button">Submit Help Request</button>
+    <p class="note">Requests are submitted for administrator review before appearing publicly.</p>
+  </section>
 
-  <p id="userStatus">Not logged in</p>
-</section>
+  <section id="visaPanel">
+    <h2>🌍 Visa Help</h2>
+    <p>Choose a destination to visit its official immigration or visa information website. Requirements depend on your passport and purpose of travel.</p>
+    <select id="visaDestination">
+      <option value="">Select destination</option>
+      <option value="uk">United Kingdom</option><option value="usa">United States</option>
+      <option value="canada">Canada</option><option value="australia">Australia</option>
+      <option value="schengen">Schengen countries</option><option value="turkey">Türkiye</option>
+      <option value="india">India</option><option value="uae">United Arab Emirates</option>
+      <option value="saudi">Saudi Arabia</option><option value="newzealand">New Zealand</option>
+      <option value="japan">Japan</option><option value="pakistan">Pakistan</option>
+    </select>
+    <button id="visaBtn" type="button">Open Official Visa Information</button>
+    <p class="note">NeedBridge does not issue visas. Always verify requirements, fees and application steps on official government websites. Never pay an unverified person or share your account password.</p>
+  </section>
 
-<section id="profilePanel" class="hidden">
-<h2>My Profile</h2>
-<p><strong>Email:</strong> <span id="profileEmail"></span></p>
-  <p><strong>Email Verification:</strong> <span id="emailVerificationStatus">Checking...</span></p>
-<img id="profilePhoto" class="profile-photo hidden" alt="Profile Photo">
-<label for="photoFile">Choose Profile Photo</label>
-<input id="photoFile" type="file" accept="image/*">
-<button class="green" onclick="uploadProfilePhoto()">Upload Photo</button>
-<hr>
-<label for="profileName">Full Name</label>
-<input id="profileName" placeholder="Enter your full name">
-<button class="green" onclick="saveProfile()">Save Profile</button>
-</section>
+  <section id="requestsPanel">
+    <h2>Community Help Requests</h2>
+    <button id="refreshPostsBtn" type="button">Refresh Requests</button>
+    <div id="posts">Loading approved requests...</div>
+  </section>
 
-<section id="notificationsPanel" class="hidden">
-<h2>🔔 Notifications <span id="unreadBadge" class="unread-badge hidden">0</span></h2>
-<p id="notificationCount">Your notifications</p>
-<button onclick="loadNotifications()">Refresh Notifications</button>
-<button class="green" onclick="markAllNotificationsRead()">Mark All as Read</button>
-<div id="notificationsList">Loading notifications...</div>
-</section>
+  <section id="notificationsPanel" class="hidden">
+    <h2>🔔 My Notifications</h2>
+    <button id="refreshNotificationsBtn" type="button">Refresh Notifications</button>
+    <div id="notificationsList">No notifications loaded.</div>
+  </section>
 
-<section id="chatPanel" class="hidden">
-<h2>💬 Inbox</h2>
-<p>Private conversations about approved help requests.</p>
-<button onclick="loadConversations()">Refresh Inbox</button>
-<div id="conversationList">Loading conversations...</div>
-<div id="chatBox" class="hidden">
-<h3>Chat Messages</h3>
-<div id="chatMessages"></div>
-<textarea id="chatText" placeholder="Write a message..."></textarea>
-<button onclick="sendChatMessage()">Send Message</button>
-<hr>
-<h3>Send Image</h3>
-<input type="file" id="chatImage" accept="image/jpeg,image/png,image/webp">
-<button onclick="sendChatImage()">Send Image</button>
-<h3>Send Voice Message</h3>
-<input type="file" id="chatVoice" accept="audio/*">
-<button onclick="sendChatVoice()">Send Voice</button>
-</div>
-</section>
-
-<section>
-<h2>Request Help</h2>
-<input id="postTitle" placeholder="Request Title">
-<select id="category">
-<option value="">Select a Category</option>
-<option>Food</option><option>Education</option>
-<option>Healthcare</option><option>Visa</option>
-<option>Clothing</option><option>Volunteering</option>
-</select>
-<textarea id="description" placeholder="Describe what help you need"></textarea>
-<input id="country" placeholder="Country">
-<input id="city" placeholder="City">
-<button onclick="submitPost()">Submit Help Request</button>
-</section>
-
-<section id="visaHelpPanel">
-  <h2>🌍 Visa Help</h2>
-  <p>Find official visa information for your destination. Requirements depend on your passport, residence country and travel purpose.</p>
-
-  <label for="visaPassportCountry"><strong>Country of your passport</strong></label>
-  <input id="visaPassportCountry" type="text" placeholder="Example: Pakistan">
-
-  <label for="visaDestination"><strong>Destination country</strong></label>
-  <select id="visaDestination">
-    <option value="">Select destination country</option>
-    <option value="uk">United Kingdom</option>
-    <option value="usa">United States</option>
-    <option value="canada">Canada</option>
-    <option value="australia">Australia</option>
-    <option value="schengen">Schengen Area (Europe)</option>
-    <option value="turkey">Türkiye</option>
-    <option value="india">India</option>
-    <option value="uae">United Arab Emirates</option>
-    <option value="saudi">Saudi Arabia</option>
-    <option value="newzealand">New Zealand</option>
-    <option value="japan">Japan</option>
-    <option value="pakistan">Pakistan</option>
-  </select>
-
-  <label for="visaPurpose"><strong>Reason for travel</strong></label>
-  <select id="visaPurpose">
-    <option value="">Select visa purpose</option>
-    <option>Tourism / Visit</option>
-    <option>Study</option>
-    <option>Work</option>
-    <option>Family visit</option>
-    <option>Business</option>
-    <option>Transit</option>
-  </select>
-
-  <button type="button" onclick="openVisaPortal()">View Official Visa Information</button>
-  <p id="visaHelpMessage" role="status" aria-live="polite"></p>
-  <p><strong>Important:</strong> NeedBridge provides guidance and links only. It does not issue visas or submit applications. Always confirm the latest requirements, fees and application method on the destination government's official website or the embassy/consulate responsible for your place of residence. Never send your passport, passwords or payment to an unverified person.</p>
-  <p><small>First version: official information links for the destinations listed above. More destinations can be added later.</small></p>
-</section>
-
-<section>
-<h2>Help Categories</h2>
-<p>🍚 Food | 📚 Education | 🏥 Healthcare</p>
-<p>🛂 Visa | 👕 Clothing | 🤝 Volunteering</p>
-</section>
-
-<section>
-<h2>Help Requests</h2>
-<button onclick="loadRequests()">Refresh Requests</button>
-<div id="posts">Loading requests...</div>
-</section>
-
-<section id="adminPanel" class="hidden">
-<h2>Admin Dashboard</h2>
-<p>You are logged in as an Administrator.</p>
-<h3>Help Request Statistics</h3>
-<div class="stats">
-<div class="stat"><h3>Total Help Requests</h3><strong id="totalRequests">0</strong></div>
-<div class="stat"><h3>Pending Requests</h3><strong id="pendingRequests">0</strong></div>
-<div class="stat"><h3>Approved Requests</h3><strong id="approvedRequests">0</strong></div>
-<div class="stat"><h3>Rejected Requests</h3><strong id="rejectedRequests">0</strong></div>
-</div>
-<h3>User Statistics</h3>
-<div class="stats">
-<div class="stat"><h3>Total Users</h3><strong id="totalUsers">0</strong></div>
-<div class="stat"><h3>Total Categories</h3><strong id="totalCategories">0</strong></div>
-<div class="stat"><h3>Active Users (30 Days)</h3><strong id="activeUsers">0</strong></div>
-</div>
-<button onclick="loadRequests()">Refresh Requests</button>
-<button onclick="loadDashboardStats()">Refresh User Stats</button>
-<div id="adminPosts"></div>
-<h3>User Management</h3>
-<p>Manage registered platform users.</p>
-<button onclick="loadUsers()">Refresh Users</button>
-<div id="usersList">Loading users...</div>
-</section>
-<div id="message" role="status"></div>
-</section>
-
-<section id="reportsPanel" class="hidden">
-<h2>Admin Reports Dashboard</h2>
-<div class="stats">
-<div class="stat"><h3>Total Reports</h3><strong id="totalReports">0</strong></div>
-<div class="stat"><h3>Pending Reports</h3><strong id="pendingReports">0</strong></div>
-<div class="stat"><h3>Reviewed Reports</h3><strong id="reviewedReports">0</strong></div>
-<div class="stat"><h3>Dismissed Reports</h3><strong id="dismissedReports">0</strong></div>
-</div>
-<h3>Filter Reports</h3>
-<select id="reportFilter" onchange="loadReports()">
-<option value="all">All Reports</option>
-<option value="pending">Pending</option>
-<option value="reviewed">Reviewed</option>
-<option value="dismissed">Dismissed</option>
-</select>
-<button onclick="loadReports()">Refresh Reports</button>
-<div id="reportList">Loading reports...</div>
-</section>
+  <section id="adminPanel" class="hidden">
+    <h2>Admin Dashboard</h2>
+    <p class="note">Only accounts listed in the Supabase <code>nb_admins</code> table can use this area.</p>
+    <div class="grid">
+      <div class="card"><strong>Total requests</strong><div id="totalCount">0</div></div>
+      <div class="card"><strong>Pending requests</strong><div id="pendingCount">0</div></div>
+    </div>
+    <button id="refreshAdminBtn" type="button">Refresh All Requests</button>
+    <div id="adminPosts">Loading admin requests...</div>
+  </section>
 </main>
-<footer>NeedBridge — Free Help for Everyone</footer>
+
+<footer>NeedBridge — Ask • Help • Grow Together</footer>
+
 <script>
-const SUPABASE_URL="https://urozgfqxtbjmejyyocow.supabase.co";
-const SUPABASE_KEY="sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+"use strict";
 
-let currentUser=null;
-let isAdmin=false;
-let activeConversation=null;
-let chatChannel=null;
+/* Supabase project connection */
+const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
 
-function msg(message){
- document.getElementById("message").textContent=message;
+let db = null;
+let currentUser = null;
+let isAdmin = false;
+let busy = false;
+
+const $ = (id) => document.getElementById(id);
+
+function showMessage(text, type = "info") {
+  const box = $("message");
+  box.textContent = text;
+  box.className = "show" + (type === "error" ? " error" : type === "success" ? " success" : "");
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+function clearMessage() {
+  $("message").textContent = "";
+  $("message").className = "";
+}
+function setBusy(value) {
+  busy = value;
+  ["signupBtn","loginBtn","forgotBtn","logoutBtn","saveProfileBtn","uploadPhotoBtn","submitPostBtn"].forEach(id => {
+    const el = $(id); if (el) el.disabled = value;
+  });
+}
+function safe(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[ch]);
+}
+function requireClient() {
+  if (!db) throw new Error("Supabase connection did not load. Check your internet connection and refresh the page.");
+}
+function updateUI() {
+  document.body.classList.toggle("signed-in", !!currentUser);
+  $("userStatus").textContent = currentUser ? "Logged in: " + currentUser.email : "Not logged in";
+  $("logoutArea").classList.toggle("hidden", !currentUser);
+  $("profilePanel").classList.toggle("hidden", !currentUser);
+  $("requestPanel").classList.toggle("hidden", !currentUser);
+  $("notificationsPanel").classList.toggle("hidden", !currentUser);
+  $("adminPanel").classList.toggle("hidden", !currentUser || !isAdmin);
+}
+async function runAction(action) {
+  if (busy) return;
+  setBusy(true);
+  clearMessage();
+  try { await action(); }
+  catch (err) {
+    console.error(err);
+    showMessage(err?.message || "Something went wrong. Please try again.", "error");
+  } finally { setBusy(false); }
 }
 
-function safe(value){
- return String(value||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-
-async function signup(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- if(!email||!password){msg("Please enter your email and password.");return;}
- const {error}=await db.auth.signUp({email,password});
- if(error){msg("Signup error: "+error.message);return;}
- msg("Account created. Please confirm your email if requested.");
-}
-
-async function login(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- if(!email||!password){msg("Please enter your email and password.");return;}
- const {error}=await db.auth.signInWithPassword({email,password});
- if(error){msg("Login error: "+error.message);return;}
- msg("Login successful.");
- await updateUser();
-}
-
-async function logout(){
- const {error}=await db.auth.signOut();
- if(error){msg(error.message);return;}
- if(chatChannel){
-  await db.removeChannel(chatChannel);
-  chatChannel=null;
- }
- currentUser=null;
- isAdmin=false;
- activeConversation=null;
- updateUI();
- document.getElementById("posts").textContent="Loading requests...";
- await loadRequests();
- msg("Logout successful.");
-}
-
-function updateUI(){
- document.getElementById("userStatus").textContent=currentUser?"Logged in: "+currentUser.email:"Not logged in";
- document.getElementById("adminPanel").classList.toggle("hidden",!isAdmin);
- document.getElementById("reportsPanel").classList.toggle("hidden",!isAdmin);
- document.getElementById("profilePanel").classList.toggle("hidden",!currentUser);
- document.getElementById("notificationsPanel").classList.toggle("hidden",!currentUser);
- document.getElementById("chatPanel").classList.toggle("hidden",!currentUser);
-
- if(!currentUser){
-  document.getElementById("unreadBadge").textContent="0";
-  document.getElementById("unreadBadge").classList.add("hidden");
-  document.getElementById("notificationCount").textContent="Your notifications";
-  document.getElementById("notificationsList").textContent="Please login to view notifications.";
-  document.getElementById("conversationList").textContent="Please login to use Inbox.";
-  document.getElementById("chatBox").classList.add("hidden");
- }
-}
-
-async function updateUser(){
- const {data,error}=await db.auth.getUser();
- if(error){
-  currentUser=null;
-  isAdmin=false;
-  updateUI();
-  msg("Authentication error: "+error.message);
-  return;
- }
- currentUser=data.user||null;
- isAdmin=false;
-
- if(currentUser){
-  const {data:adminData,error:adminError}=await db.from("nb_admins").select("user_id").eq("user_id",currentUser.id).maybeSingle();
-  if(!adminError&&adminData)isAdmin=true;
- }
-
- updateUI();
-
- if(currentUser){
-  await loadProfile();
-  await loadNotifications();
-  await loadConversations();
- }
-
- await loadRequests();
-
- if(isAdmin){
-  await loadReports();
-  await loadDashboardStats();
-  await loadUsers();
- }
-}
-
-/* PROFILE */
-
-async function loadProfile(){
- if(!currentUser)return;
- document.getElementById("profileEmail").textContent=currentUser.email||"";
-   const emailVerified = !!currentUser.email_confirmed_at;
-
- document.getElementById("emailVerificationStatus").textContent =
-  emailVerified ? "Verified ✓" : "Not verified";
- const nameInput=document.getElementById("profileName");
- const photo=document.getElementById("profilePhoto");
- nameInput.value="";
-
- const {data,error}=await db.from("nb_profiles").select("full_name, avatar_url").eq("id",currentUser.id).maybeSingle();
-
- if(error){msg("Profile loading error: "+error.message);return;}
-
- if(data){
-  nameInput.value=data.full_name||"";
-  if(data.avatar_url){
-   photo.src=data.avatar_url;
-   photo.classList.remove("hidden");
-  }else{
-   photo.removeAttribute("src");
-   photo.classList.add("hidden");
+/* Account actions */
+async function signup() {
+  requireClient();
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  if (!email || !password) throw new Error("Please enter your email and password.");
+  if (password.length < 6) throw new Error("Password must contain at least 6 characters.");
+  const {data,error} = await db.auth.signUp({
+    email, password,
+    options: { emailRedirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) throw error;
+  if (data.session) {
+    await refreshSession();
+    showMessage("Your account has been created and you are logged in.", "success");
+  } else {
+    showMessage("Account created. Please check your email and confirm your email address, then log in.", "success");
   }
- }
+}
+async function login() {
+  requireClient();
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  if (!email || !password) throw new Error("Please enter your email and password.");
+  const {error} = await db.auth.signInWithPassword({email,password});
+  if (error) throw error;
+  await refreshSession();
+  showMessage("Login successful.", "success");
+}
+async function forgotPassword() {
+  requireClient();
+  const email = $("email").value.trim();
+  if (!email) throw new Error("Enter your email address first, then tap Forgot Password.");
+  const redirectTo = window.location.origin + window.location.pathname;
+  const {error} = await db.auth.resetPasswordForEmail(email,{redirectTo});
+  if (error) throw error;
+  showMessage("Password reset email requested. Check your inbox and spam folder.", "success");
+}
+async function logout() {
+  requireClient();
+  const {error} = await db.auth.signOut();
+  if (error) throw error;
+  currentUser = null; isAdmin = false;
+  updateUI();
+  $("posts").textContent = "Log in to submit a request. Approved community requests are public.";
+  showMessage("You have logged out.", "success");
 }
 
-async function saveProfile(){
- if(!currentUser){msg("Please login first.");return;}
- const fullName=document.getElementById("profileName").value.trim();
- if(!fullName){msg("Please enter your full name.");return;}
-
- const {data,error}=await db.from("nb_profiles").update({full_name:fullName}).eq("id",currentUser.id).select("id");
-
- if(error){msg("Profile save error: "+error.message);return;}
- if(!data||data.length===0){msg("Profile was not updated. Please contact support.");return;}
-
- msg("Your profile has been saved successfully.");
+/* Session and administrator state */
+async function refreshSession() {
+  requireClient();
+  const {data,error} = await db.auth.getSession();
+  if (error) throw error;
+  currentUser = data.session?.user || null;
+  isAdmin = false;
+  if (currentUser) {
+    const {data:adminRow,error:adminError} = await db.from("nb_admins")
+      .select("user_id").eq("user_id",currentUser.id).maybeSingle();
+    if (adminError) console.warn("Admin check:",adminError.message);
+    isAdmin = !!adminRow;
+  }
+  updateUI();
+  if (currentUser) {
+    await loadProfile();
+    await loadNotifications();
+    if (isAdmin) await loadAdminRequests();
+  }
+  await loadPublicRequests();
+}
+async function loadProfile() {
+  if (!currentUser) return;
+  $("profileEmail").textContent = currentUser.email || "";
+  $("verificationStatus").textContent = currentUser.email_confirmed_at ? "Verified ✓" : "Not verified";
+  const {data,error} = await db.from("nb_profiles")
+    .select("full_name,avatar_url").eq("id",currentUser.id).maybeSingle();
+  if (error) { console.warn("Profile read:",error.message); return; }
+  $("profileName").value = data?.full_name || "";
+  if (data?.avatar_url) {
+    $("profilePhoto").src = data.avatar_url;
+    $("profilePhoto").classList.remove("hidden");
+  } else {
+    $("profilePhoto").removeAttribute("src");
+    $("profilePhoto").classList.add("hidden");
+  }
+}
+async function saveProfile() {
+  if (!currentUser) throw new Error("Please log in first.");
+  const full_name = $("profileName").value.trim();
+  if (!full_name) throw new Error("Please enter your full name.");
+  const {error} = await db.from("nb_profiles").upsert(
+    {id:currentUser.id,email:currentUser.email,full_name},
+    {onConflict:"id"}
+  );
+  if (error) throw error;
+  showMessage("Profile saved successfully.", "success");
+}
+async function uploadProfilePhoto() {
+  if (!currentUser) throw new Error("Please log in first.");
+  const file = $("photoFile").files[0];
+  if (!file) throw new Error("Choose a photo first.");
+  const allowed = ["image/jpeg","image/png","image/webp"];
+  if (!allowed.includes(file.type)) throw new Error("Use a JPG, PNG or WEBP image.");
+  if (file.size > 5*1024*1024) throw new Error("Photo must be smaller than 5 MB.");
+  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+  const path = currentUser.id + "/" + Date.now() + "." + ext;
+  const {error:uploadError} = await db.storage.from("profile-photos")
+    .upload(path,file,{contentType:file.type,upsert:true});
+  if (uploadError) throw uploadError;
+  const {data} = db.storage.from("profile-photos").getPublicUrl(path);
+  const {error:updateError} = await db.from("nb_profiles")
+    .upsert({id:currentUser.id,email:currentUser.email,avatar_url:data.publicUrl},{onConflict:"id"});
+  if (updateError) throw updateError;
+  $("profilePhoto").src = data.publicUrl;
+  $("profilePhoto").classList.remove("hidden");
+  $("photoFile").value = "";
+  showMessage("Profile photo uploaded.", "success");
 }
 
-async function uploadProfilePhoto(){
- if(!currentUser){msg("Please login first.");return;}
- const input=document.getElementById("photoFile");
- const file=input.files[0];
-
- if(!file){msg("Please choose a photo first.");return;}
- if(!file.type.startsWith("image/")){msg("Please select an image file.");return;}
- if(file.size>5*1024*1024){msg("Image must be smaller than 5 MB.");return;}
-
- const extensions={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"};
- const extension=extensions[file.type];
- if(!extension){msg("Please use JPG, PNG, WEBP or GIF.");return;}
-
- msg("Uploading photo...");
- const path=currentUser.id+"/"+Date.now()+"."+extension;
-
- const {error:uploadError}=await db.storage.from("profile-photos").upload(path,file,{contentType:file.type,upsert:false});
- if(uploadError){msg("Photo upload error: "+uploadError.message);return;}
-
- const {data:urlData}=db.storage.from("profile-photos").getPublicUrl(path);
-
- const {error:updateError}=await db.from("nb_profiles").update({avatar_url:urlData.publicUrl}).eq("id",currentUser.id);
- if(updateError){msg("Photo uploaded but profile update failed: "+updateError.message);return;}
-
- const photo=document.getElementById("profilePhoto");
- photo.src=urlData.publicUrl;
- photo.classList.remove("hidden");
- input.value="";
- msg("Profile photo uploaded successfully!");
+/* Help request submission and public feed */
+async function submitPost() {
+  if (!currentUser) throw new Error("Please log in first.");
+  const title = $("postTitle").value.trim();
+  const categoryName = $("category").value;
+  const description = $("description").value.trim();
+  const country = $("country").value.trim();
+  const city = $("city").value.trim();
+  if (!title || !categoryName || !description) throw new Error("Please complete the title, category and description.");
+  const {data:category,error:catError} = await db.from("nb_categories")
+    .select("id").eq("name",categoryName).maybeSingle();
+  if (catError) throw catError;
+  if (!category) throw new Error("This category is not available in nb_categories. Ask the administrator to add it.");
+  const {error} = await db.from("nb_posts").insert({
+    owner_id:currentUser.id, category_id:category.id, title, description,
+    post_type:"help", country, city, status:"pending"
+  });
+  if (error) throw error;
+  $("postTitle").value = ""; $("category").value = "";
+  $("description").value = ""; $("country").value = ""; $("city").value = "";
+  showMessage("Submitted successfully. It will appear after Admin approval.", "success");
+}
+async function loadPublicRequests() {
+  const box = $("posts");
+  box.textContent = "Loading approved requests...";
+  const {data,error} = await db.from("nb_posts")
+    .select("id,title,description,country,city,created_at,category_id")
+    .eq("status","approved").order("created_at",{ascending:false}).limit(50);
+  if (error) {
+    box.textContent = "Could not load requests: " + error.message;
+    return;
+  }
+  if (!data?.length) { box.textContent = "No approved help requests yet."; return; }
+  box.innerHTML = data.map(p => `
+    <article class="post">
+      <h3>${safe(p.title)}</h3>
+      <p>${safe(p.description)}</p>
+      <small>${safe([p.city,p.country].filter(Boolean).join(", "))} · ${p.created_at ? new Date(p.created_at).toLocaleDateString() : ""}</small>
+    </article>`).join("");
 }
 
-/* NOTIFICATIONS */
+/* Admin moderation */
+async function loadAdminRequests() {
+  if (!isAdmin) return;
+  const box = $("adminPosts");
+  box.textContent = "Loading requests...";
+  const {data,error} = await db.from("nb_posts")
+    .select("id,title,description,country,city,status,created_at")
+    .order("created_at",{ascending:false}).limit(100);
+  if (error) { box.textContent = "Admin request error: " + error.message; return; }
+  const rows = data || [];
+  $("totalCount").textContent = String(rows.length);
+  $("pendingCount").textContent = String(rows.filter(p=>p.status==="pending").length);
+  if (!rows.length) { box.textContent = "No help requests found."; return; }
+  box.innerHTML = rows.map(p => `
+    <article class="post">
+      <h3>${safe(p.title)}</h3>
+      <p>${safe(p.description)}</p>
+      <p><span class="pill">${safe(p.status)}</span> ${safe([p.city,p.country].filter(Boolean).join(", "))}</p>
+      ${p.status === "pending" ? `<button type="button" data-approve="${safe(p.id)}">Approve</button><button class="red" type="button" data-reject="${safe(p.id)}">Reject</button>` : ""}
+    </article>`).join("");
+  box.querySelectorAll("[data-approve]").forEach(btn => btn.addEventListener("click",()=>moderatePost(btn.dataset.approve,"approved")));
+  box.querySelectorAll("[data-reject]").forEach(btn => btn.addEventListener("click",()=>moderatePost(btn.dataset.reject,"rejected")));
+}
+async function moderatePost(id,status) {
+  await runAction(async()=>{
+    if (!isAdmin) throw new Error("Administrator access required.");
+    const {error} = await db.from("nb_posts").update({
+      status, reviewed_at:new Date().toISOString(), reviewed_by:currentUser.id
+    }).eq("id",id);
+    if (error) throw error;
+    showMessage("Request status updated to " + status + ".", "success");
+    await loadAdminRequests();
+    await loadPublicRequests();
+  });
+}
 
-async function loadNotifications(){
- if(!currentUser)return;
- const box=document.getElementById("notificationsList");
- box.textContent="Loading notifications...";
+/* Notifications */
+async function loadNotifications() {
+  if (!currentUser) return;
+  const box = $("notificationsList");
+  box.textContent = "Loading notifications...";
+  const {data,error} = await db.from("nb_notifications")
+    .select("id,title,message,is_read,created_at")
+    .eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(30);
+  if (error) { box.textContent = "Notifications: " + error.message; return; }
+  if (!data?.length) { box.textContent = "No notifications yet."; return; }
+  box.innerHTML = data.map(n=>`
+    <article class="post">
+      <strong>${safe(n.title || "Notification")}</strong>
+      <p>${safe(n.message || "")}</p>
+      <small>${n.is_read ? "Read" : "Unread"} · ${n.created_at ? new Date(n.created_at).toLocaleString() : ""}</small>
+    </article>`).join("");
+}
 
- const {data,error}=await db.from("nb_notifications").select("id,title,message,is_read,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false});
-
- if(error){
-  box.textContent="Notifications error: "+error.message;
-  msg("Notifications error: "+error.message);
-  return;
- }
-
- const notifications=data||[];
- const unread=notifications.filter(n=>!n.is_read).length;
-
- document.getElementById("notificationCount").textContent="Total: "+notifications.length+" | Unread: "+unread;
-
- const badge=document.getElementById("unreadBadg
+/* Official visa information links */
+const visaLinks = {
+  uk:"https://www.gov.uk/browse/visas-immigration",
+  usa:"https://travel.state.gov/content/travel/en/us-visas.html",
+  canada:"https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html",
+  australia:"https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",
+  schengen:"https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/visa-policy_en",
+  turkey:"https://www.evisa.gov.tr/",
+  india:"https://indianvisaonline.gov.in/",
+  uae:"https://u.ae/en/information-and-services/visa-and-emirates-id",
+  saudi:"https://visa.mofa.gov.sa/",
+  newzealan
