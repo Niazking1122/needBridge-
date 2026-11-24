@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,417 +9,219 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-:root{--blue:#075985;--sky:#0284c7;--green:#15803d;--ink:#172033;--muted:#64748b;--bg:#f1f5f9}
+:root{
+--blue:#075985;
+--sky:#0284c7;
+--green:#15803d;
+--ink:#172033;
+--muted:#64748b;
+--bg:#f1f5f9
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif}
-header{background:#07152f;color:#fff;text-align:center;padding:25px 15px}
-.logo{font-size:38px;font-weight:800;letter-spacing:4px;color:#38bdf8}
+body{
+margin:0;
+background:var(--bg);
+color:var(--ink);
+font-family:Arial,sans-serif
+}
+header{
+background:#07152f;
+color:#fff;
+text-align:center;
+padding:25px 15px
+}
+.logo{
+font-size:38px;
+font-weight:800;
+letter-spacing:4px;
+color:#38bdf8
+}
 header p{margin:8px 0;color:#e2e8f0}
 main{max-width:900px;margin:18px auto;padding:0 12px 25px}
-section,.card{background:#fff;padding:18px;margin:14px 0;border-radius:14px;box-shadow:0 2px 9px #00000010}
+section,.card{
+background:#fff;
+padding:18px;
+margin:14px 0;
+border-radius:14px;
+box-shadow:0 2px 9px #00000010
+}
 h2{margin-top:0;color:var(--blue)}
-input,textarea,select{display:block;width:100%;padding:13px;margin:8px 0;border:1px solid #cbd5e1;border-radius:9px;font-size:16px;background:#fff}
+input,textarea,select{
+display:block;
+width:100%;
+padding:13px;
+margin:8px 0;
+border:1px solid #cbd5e1;
+border-radius:9px;
+font-size:16px;
+background:#fff
+}
 textarea{min-height:110px;resize:vertical}
-button{border:0;border-radius:9px;padding:12px 16px;margin:5px 4px 5px 0;background:var(--sky);color:#fff;font-size:15px;font-weight:bold;cursor:pointer}
+button{
+border:0;
+border-radius:9px;
+padding:12px 16px;
+margin:5px 4px 5px 0;
+background:var(--sky);
+color:#fff;
+font-size:15px;
+font-weight:bold;
+cursor:pointer
+}
 button:disabled{opacity:.55;cursor:not-allowed}
-button.green{background:var(--green)}button.gray{background:#475569}button.red{background:#b91c1c}
+button.green{background:var(--green)}
+button.gray{background:#475569}
+button.red{background:#b91c1c}
 .hidden{display:none!important}
-#authPanel{max-width:520px;margin:20px auto;border:1px solid #dbeafe}
+#authPanel{
+max-width:520px;
+margin:20px auto;
+border:1px solid #dbeafe
+}
 #authPanel h2{text-align:center}
-#message{display:none;padding:13px;border-radius:9px;margin:12px 0;overflow-wrap:anywhere}
-#message.show{display:block;background:#eff6ff;color:#075985;border:1px solid #bfdbfe}
-#message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-#message.success{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+#message{
+display:none;
+padding:13px;
+border-radius:9px;
+margin:12px 0;
+overflow-wrap:anywhere
+}
+#message.show{
+display:block;
+background:#eff6ff;
+color:#075985;
+border:1px solid #bfdbfe
+}
+#message.error{
+background:#fef2f2;
+color:#991b1b;
+border-color:#fecaca
+}
+#message.success{
+background:#f0fdf4;
+color:#166534;
+border-color:#bbf7d0
+}
 .status{color:var(--blue);font-weight:bold;overflow-wrap:anywhere}
-.post{border-left:5px solid var(--sky);padding:14px;margin:12px 0;background:#f8fafc;border-radius:8px;overflow-wrap:anywhere}
+.post{
+border-left:5px solid var(--sky);
+padding:14px;
+margin:12px 0;
+background:#f8fafc;
+border-radius:8px;
+overflow-wrap:anywhere
+}
 .post small{color:var(--muted)}
-.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#e0f2fe;color:#075985;font-size:12px;font-weight:bold}
-.profile-photo{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--sky)}
+.pill{
+display:inline-block;
+padding:4px 9px;
+border-radius:20px;
+background:#e0f2fe;
+color:#075985;
+font-size:12px;
+font-weight:bold
+}
+.profile-photo{
+width:100px;
+height:100px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid var(--sky)
+}
 footer{text-align:center;color:var(--muted);padding:20px}
 .note{font-size:14px;color:var(--muted);line-height:1.5}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-@media(max-width:600px){.grid{grid-template-columns:1fr}.logo{font-size:31px}button{max-width:100%}}
+.grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:10px
+}
+@media(max-width:600px){
+.grid{grid-template-columns:1fr}
+.logo{font-size:31px}
+button{max-width:100%}
+}
 a{color:#0369a1;overflow-wrap:anywhere}
 </style>
 </head>
+
 <body>
+
 <header>
-  <div class="logo">🌉 NeedBridge</div>
-  <p>Need Help? We're Here!</p>
-  <p style="color:#38bdf8">ASK • HELP • GROW TOGETHER</p>
+<div class="logo">🌉 NeedBridge</div>
+<p>Need Help? We're Here!</p>
+<p style="color:#38bdf8">ASK • HELP • GROW TOGETHER</p>
 </header>
 
 <main>
-  <section id="authPanel">
-    <h2>Welcome to NeedBridge</h2>
-    <p class="note">Create an account or log in to ask for help and connect with the community.</p>
-    <label for="email">Email address</label>
-    <input id="email" type="email" autocomplete="email" placeholder="Enter your email">
-    <label for="password">Password</label>
-    <input id="password" type="password" autocomplete="current-password" placeholder="At least 6 characters">
-    <button id="signupBtn" class="green" type="button">Create Account</button>
-    <button id="loginBtn" type="button">Login</button>
-    <button id="forgotBtn" class="gray" type="button">Forgot Password?</button>
-    <p id="userStatus" class="status">Not logged in</p>
-    <div id="logoutArea" class="hidden"><button id="logoutBtn" class="red" type="button">Logout</button></div>
-  </section>
 
-  <div id="message" role="status" aria-live="polite"></div>
+<section id="authPanel">
+<h2>Welcome to NeedBridge</h2>
+<p class="note">Create an account or log in to ask for help and connect with the community.</p>
 
-  <section id="profilePanel" class="hidden">
-    <h2>My Profile</h2>
-    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-    <p><strong>Email verification:</strong> <span id="verificationStatus">Checking...</span></p>
-    <img id="profilePhoto" class="profile-photo hidden" alt="Profile photo">
-    <label for="profileName">Full name</label>
-    <input id="profileName" maxlength="100" placeholder="Your full name">
-    <button id="saveProfileBtn" class="green" type="button">Save Profile</button>
-    <label for="photoFile">Profile photo (JPG, PNG or WEBP; max 5 MB)</label>
-    <input id="photoFile" type="file" accept="image/jpeg,image/png,image/webp">
-    <button id="uploadPhotoBtn" type="button">Upload Photo</button>
-  </section>
+<label for="email">Email address</label>
+<input id="email" type="email" autocomplete="email" placeholder="Enter your email">
 
-  <section id="requestPanel" class="hidden">
-    <h2>Request Help</h2>
-    <p class="note">Share only the information needed. Do not post passwords, bank details or private identity documents.</p>
-    <input id="postTitle" maxlength="150" placeholder="What help do you need?">
-    <select id="category">
-      <option value="">Select a category</option>
-      <option>Food</option><option>Education</option><option>Healthcare</option>
-      <option>Visa</option><option>Clothing</option><option>Volunteering</option>
-    </select>
-    <textarea id="description" maxlength="5000" placeholder="Explain your request"></textarea>
-    <div class="grid">
-      <input id="country" maxlength="100" placeholder="Country">
-      <input id="city" maxlength="100" placeholder="City">
-    </div>
-    <button id="submitPostBtn" class="green" type="button">Submit Help Request</button>
-    <p class="note">Requests are submitted for administrator review before appearing publicly.</p>
-  </section>
+<label for="password">Password</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="At least 6 characters">
 
-  <section id="visaPanel">
-    <h2>🌍 Visa Help</h2>
-    <p>Choose a destination to visit its official immigration or visa information website. Requirements depend on your passport and purpose of travel.</p>
-    <select id="visaDestination">
-      <option value="">Select destination</option>
-      <option value="uk">United Kingdom</option><option value="usa">United States</option>
-      <option value="canada">Canada</option><option value="australia">Australia</option>
-      <option value="schengen">Schengen countries</option><option value="turkey">Türkiye</option>
-      <option value="india">India</option><option value="uae">United Arab Emirates</option>
-      <option value="saudi">Saudi Arabia</option><option value="newzealand">New Zealand</option>
-      <option value="japan">Japan</option><option value="pakistan">Pakistan</option>
-    </select>
-    <button id="visaBtn" type="button">Open Official Visa Information</button>
-    <p class="note">NeedBridge does not issue visas. Always verify requirements, fees and application steps on official government websites. Never pay an unverified person or share your account password.</p>
-  </section>
+<button id="signupBtn" class="green" type="button">Create Account</button>
+<button id="loginBtn" type="button">Login</button>
+<button id="forgotBtn" class="gray" type="button">Forgot Password?</button>
 
-  <section id="requestsPanel">
-    <h2>Community Help Requests</h2>
-    <button id="refreshPostsBtn" type="button">Refresh Requests</button>
-    <div id="posts">Loading approved requests...</div>
-  </section>
+<p id="userStatus" class="status">Not logged in</p>
 
-  <section id="notificationsPanel" class="hidden">
-    <h2>🔔 My Notifications</h2>
-    <button id="refreshNotificationsBtn" type="button">Refresh Notifications</button>
-    <div id="notificationsList">No notifications loaded.</div>
-  </section>
+<div id="logoutArea" class="hidden">
+<button id="logoutBtn" class="red" type="button">Logout</button>
+</div>
+</section>
 
-  <section id="adminPanel" class="hidden">
-    <h2>Admin Dashboard</h2>
-    <p class="note">Only accounts listed in the Supabase <code>nb_admins</code> table can use this area.</p>
-    <div class="grid">
-      <div class="card"><strong>Total requests</strong><div id="totalCount">0</div></div>
-      <div class="card"><strong>Pending requests</strong><div id="pendingCount">0</div></div>
-    </div>
-    <button id="refreshAdminBtn" type="button">Refresh All Requests</button>
-    <div id="adminPosts">Loading admin requests...</div>
-  </section>
+<div id="message" role="status" aria-live="polite"></div>
+
+<section id="profilePanel" class="hidden">
+<h2>My Profile</h2>
+<p><strong>Email:</strong> <span id="profileEmail"></span></p>
+<p><strong>Email verification:</strong> <span id="verificationStatus">Checking...</span></p>
+
+<img id="profilePhoto" class="profile-photo hidden" alt="Profile photo">
+
+<label for="profileName">Full name</label>
+<input id="profileName" maxlength="100" placeholder="Your full name">
+
+<button id="saveProfileBtn" class="green" type="button">Save Profile</button>
+
+<label for="photoFile">Profile photo (max 5 MB)</label>
+<input id="photoFile" type="file" accept="image/jpeg,image/png,image/webp">
+<button id="uploadPhotoBtn" type="button">Upload Photo</button>
+</section>
+
+<section id="requestPanel" class="hidden">
+<h2>Request Help</h2>
+<p class="note">Do not post passwords, bank details or private identity documents.</p>
+
+<input id="postTitle" maxlength="150" placeholder="What help do you need?">
+
+<select id="category">
+<option value="">Select a category</option>
+<option>Food</option>
+<option>Education</option>
+<option>Healthcare</option>
+<option>Visa</option>
+<option>Clothing</option>
+<option>Volunteering</option>
+</select>
+
+<textarea id="description" maxlength="5000" placeholder="Explain your request"></textarea>
+
+<div class="grid">
+<input id="country" maxlength="100" placeholder="Country">
+<input id="city" maxlength="100" placeholder="City">
+</div>
+
+<button id="submitPostBtn" class="green" type="button">Submit Help Request</button>
+<p class="note">Requests are submitted for administrator review.</p>
+</section>
 </main>
-
-<footer>NeedBridge — Ask • Help • Grow Together</footer>
-
-<script>
-"use strict";
-
-/* Supabase project connection */
-const SUPABASE_URL = "https://urozgfqxtbjmejyyocow.supabase.co";
-const SUPABASE_KEY = "sb_publishable_bac4hezW3ubW7BtEBjdi3g_3Qjrbv9T";
-
-let db = null;
-let currentUser = null;
-let isAdmin = false;
-let busy = false;
-
-const $ = (id) => document.getElementById(id);
-
-function showMessage(text, type = "info") {
-  const box = $("message");
-  box.textContent = text;
-  box.className = "show" + (type === "error" ? " error" : type === "success" ? " success" : "");
-  box.scrollIntoView({behavior:"smooth", block:"nearest"});
-}
-function clearMessage() {
-  $("message").textContent = "";
-  $("message").className = "";
-}
-function setBusy(value) {
-  busy = value;
-  ["signupBtn","loginBtn","forgotBtn","logoutBtn","saveProfileBtn","uploadPhotoBtn","submitPostBtn"].forEach(id => {
-    const el = $(id); if (el) el.disabled = value;
-  });
-}
-function safe(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[ch]);
-}
-function requireClient() {
-  if (!db) throw new Error("Supabase connection did not load. Check your internet connection and refresh the page.");
-}
-function updateUI() {
-  document.body.classList.toggle("signed-in", !!currentUser);
-  $("userStatus").textContent = currentUser ? "Logged in: " + currentUser.email : "Not logged in";
-  $("logoutArea").classList.toggle("hidden", !currentUser);
-  $("profilePanel").classList.toggle("hidden", !currentUser);
-  $("requestPanel").classList.toggle("hidden", !currentUser);
-  $("notificationsPanel").classList.toggle("hidden", !currentUser);
-  $("adminPanel").classList.toggle("hidden", !currentUser || !isAdmin);
-}
-async function runAction(action) {
-  if (busy) return;
-  setBusy(true);
-  clearMessage();
-  try { await action(); }
-  catch (err) {
-    console.error(err);
-    showMessage(err?.message || "Something went wrong. Please try again.", "error");
-  } finally { setBusy(false); }
-}
-
-/* Account actions */
-async function signup() {
-  requireClient();
-  const email = $("email").value.trim();
-  const password = $("password").value;
-  if (!email || !password) throw new Error("Please enter your email and password.");
-  if (password.length < 6) throw new Error("Password must contain at least 6 characters.");
-  const {data,error} = await db.auth.signUp({
-    email, password,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname }
-  });
-  if (error) throw error;
-  if (data.session) {
-    await refreshSession();
-    showMessage("Your account has been created and you are logged in.", "success");
-  } else {
-    showMessage("Account created. Please check your email and confirm your email address, then log in.", "success");
-  }
-}
-async function login() {
-  requireClient();
-  const email = $("email").value.trim();
-  const password = $("password").value;
-  if (!email || !password) throw new Error("Please enter your email and password.");
-  const {error} = await db.auth.signInWithPassword({email,password});
-  if (error) throw error;
-  await refreshSession();
-  showMessage("Login successful.", "success");
-}
-async function forgotPassword() {
-  requireClient();
-  const email = $("email").value.trim();
-  if (!email) throw new Error("Enter your email address first, then tap Forgot Password.");
-  const redirectTo = window.location.origin + window.location.pathname;
-  const {error} = await db.auth.resetPasswordForEmail(email,{redirectTo});
-  if (error) throw error;
-  showMessage("Password reset email requested. Check your inbox and spam folder.", "success");
-}
-async function logout() {
-  requireClient();
-  const {error} = await db.auth.signOut();
-  if (error) throw error;
-  currentUser = null; isAdmin = false;
-  updateUI();
-  $("posts").textContent = "Log in to submit a request. Approved community requests are public.";
-  showMessage("You have logged out.", "success");
-}
-
-/* Session and administrator state */
-async function refreshSession() {
-  requireClient();
-  const {data,error} = await db.auth.getSession();
-  if (error) throw error;
-  currentUser = data.session?.user || null;
-  isAdmin = false;
-  if (currentUser) {
-    const {data:adminRow,error:adminError} = await db.from("nb_admins")
-      .select("user_id").eq("user_id",currentUser.id).maybeSingle();
-    if (adminError) console.warn("Admin check:",adminError.message);
-    isAdmin = !!adminRow;
-  }
-  updateUI();
-  if (currentUser) {
-    await loadProfile();
-    await loadNotifications();
-    if (isAdmin) await loadAdminRequests();
-  }
-  await loadPublicRequests();
-}
-async function loadProfile() {
-  if (!currentUser) return;
-  $("profileEmail").textContent = currentUser.email || "";
-  $("verificationStatus").textContent = currentUser.email_confirmed_at ? "Verified ✓" : "Not verified";
-  const {data,error} = await db.from("nb_profiles")
-    .select("full_name,avatar_url").eq("id",currentUser.id).maybeSingle();
-  if (error) { console.warn("Profile read:",error.message); return; }
-  $("profileName").value = data?.full_name || "";
-  if (data?.avatar_url) {
-    $("profilePhoto").src = data.avatar_url;
-    $("profilePhoto").classList.remove("hidden");
-  } else {
-    $("profilePhoto").removeAttribute("src");
-    $("profilePhoto").classList.add("hidden");
-  }
-}
-async function saveProfile() {
-  if (!currentUser) throw new Error("Please log in first.");
-  const full_name = $("profileName").value.trim();
-  if (!full_name) throw new Error("Please enter your full name.");
-  const {error} = await db.from("nb_profiles").upsert(
-    {id:currentUser.id,email:currentUser.email,full_name},
-    {onConflict:"id"}
-  );
-  if (error) throw error;
-  showMessage("Profile saved successfully.", "success");
-}
-async function uploadProfilePhoto() {
-  if (!currentUser) throw new Error("Please log in first.");
-  const file = $("photoFile").files[0];
-  if (!file) throw new Error("Choose a photo first.");
-  const allowed = ["image/jpeg","image/png","image/webp"];
-  if (!allowed.includes(file.type)) throw new Error("Use a JPG, PNG or WEBP image.");
-  if (file.size > 5*1024*1024) throw new Error("Photo must be smaller than 5 MB.");
-  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
-  const path = currentUser.id + "/" + Date.now() + "." + ext;
-  const {error:uploadError} = await db.storage.from("profile-photos")
-    .upload(path,file,{contentType:file.type,upsert:true});
-  if (uploadError) throw uploadError;
-  const {data} = db.storage.from("profile-photos").getPublicUrl(path);
-  const {error:updateError} = await db.from("nb_profiles")
-    .upsert({id:currentUser.id,email:currentUser.email,avatar_url:data.publicUrl},{onConflict:"id"});
-  if (updateError) throw updateError;
-  $("profilePhoto").src = data.publicUrl;
-  $("profilePhoto").classList.remove("hidden");
-  $("photoFile").value = "";
-  showMessage("Profile photo uploaded.", "success");
-}
-
-/* Help request submission and public feed */
-async function submitPost() {
-  if (!currentUser) throw new Error("Please log in first.");
-  const title = $("postTitle").value.trim();
-  const categoryName = $("category").value;
-  const description = $("description").value.trim();
-  const country = $("country").value.trim();
-  const city = $("city").value.trim();
-  if (!title || !categoryName || !description) throw new Error("Please complete the title, category and description.");
-  const {data:category,error:catError} = await db.from("nb_categories")
-    .select("id").eq("name",categoryName).maybeSingle();
-  if (catError) throw catError;
-  if (!category) throw new Error("This category is not available in nb_categories. Ask the administrator to add it.");
-  const {error} = await db.from("nb_posts").insert({
-    owner_id:currentUser.id, category_id:category.id, title, description,
-    post_type:"help", country, city, status:"pending"
-  });
-  if (error) throw error;
-  $("postTitle").value = ""; $("category").value = "";
-  $("description").value = ""; $("country").value = ""; $("city").value = "";
-  showMessage("Submitted successfully. It will appear after Admin approval.", "success");
-}
-async function loadPublicRequests() {
-  const box = $("posts");
-  box.textContent = "Loading approved requests...";
-  const {data,error} = await db.from("nb_posts")
-    .select("id,title,description,country,city,created_at,category_id")
-    .eq("status","approved").order("created_at",{ascending:false}).limit(50);
-  if (error) {
-    box.textContent = "Could not load requests: " + error.message;
-    return;
-  }
-  if (!data?.length) { box.textContent = "No approved help requests yet."; return; }
-  box.innerHTML = data.map(p => `
-    <article class="post">
-      <h3>${safe(p.title)}</h3>
-      <p>${safe(p.description)}</p>
-      <small>${safe([p.city,p.country].filter(Boolean).join(", "))} · ${p.created_at ? new Date(p.created_at).toLocaleDateString() : ""}</small>
-    </article>`).join("");
-}
-
-/* Admin moderation */
-async function loadAdminRequests() {
-  if (!isAdmin) return;
-  const box = $("adminPosts");
-  box.textContent = "Loading requests...";
-  const {data,error} = await db.from("nb_posts")
-    .select("id,title,description,country,city,status,created_at")
-    .order("created_at",{ascending:false}).limit(100);
-  if (error) { box.textContent = "Admin request error: " + error.message; return; }
-  const rows = data || [];
-  $("totalCount").textContent = String(rows.length);
-  $("pendingCount").textContent = String(rows.filter(p=>p.status==="pending").length);
-  if (!rows.length) { box.textContent = "No help requests found."; return; }
-  box.innerHTML = rows.map(p => `
-    <article class="post">
-      <h3>${safe(p.title)}</h3>
-      <p>${safe(p.description)}</p>
-      <p><span class="pill">${safe(p.status)}</span> ${safe([p.city,p.country].filter(Boolean).join(", "))}</p>
-      ${p.status === "pending" ? `<button type="button" data-approve="${safe(p.id)}">Approve</button><button class="red" type="button" data-reject="${safe(p.id)}">Reject</button>` : ""}
-    </article>`).join("");
-  box.querySelectorAll("[data-approve]").forEach(btn => btn.addEventListener("click",()=>moderatePost(btn.dataset.approve,"approved")));
-  box.querySelectorAll("[data-reject]").forEach(btn => btn.addEventListener("click",()=>moderatePost(btn.dataset.reject,"rejected")));
-}
-async function moderatePost(id,status) {
-  await runAction(async()=>{
-    if (!isAdmin) throw new Error("Administrator access required.");
-    const {error} = await db.from("nb_posts").update({
-      status, reviewed_at:new Date().toISOString(), reviewed_by:currentUser.id
-    }).eq("id",id);
-    if (error) throw error;
-    showMessage("Request status updated to " + status + ".", "success");
-    await loadAdminRequests();
-    await loadPublicRequests();
-  });
-}
-
-/* Notifications */
-async function loadNotifications() {
-  if (!currentUser) return;
-  const box = $("notificationsList");
-  box.textContent = "Loading notifications...";
-  const {data,error} = await db.from("nb_notifications")
-    .select("id,title,message,is_read,created_at")
-    .eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(30);
-  if (error) { box.textContent = "Notifications: " + error.message; return; }
-  if (!data?.length) { box.textContent = "No notifications yet."; return; }
-  box.innerHTML = data.map(n=>`
-    <article class="post">
-      <strong>${safe(n.title || "Notification")}</strong>
-      <p>${safe(n.message || "")}</p>
-      <small>${n.is_read ? "Read" : "Unread"} · ${n.created_at ? new Date(n.created_at).toLocaleString() : ""}</small>
-    </article>`).join("");
-}
-
-/* Official visa information links */
-const visaLinks = {
-  uk:"https://www.gov.uk/browse/visas-immigration",
-  usa:"https://travel.state.gov/content/travel/en/us-visas.html",
-  canada:"https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html",
-  australia:"https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",
-  schengen:"https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/visa-policy_en",
-  turkey:"https://www.evisa.gov.tr/",
-  india:"https://indianvisaonline.gov.in/",
-  uae:"https://u.ae/en/information-and-services/visa-and-emirates-id",
-  saudi:"https://visa.mofa.gov.sa/",
-  newzealan
+</body>
+</html>
